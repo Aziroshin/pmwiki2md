@@ -5,11 +5,9 @@
 # Python
 import unittest
 
-
 # Local
 from pmwiki2md import ConvertibleContent, Conversions,\
 	PmwikiContentElement, MdContentElement, Pmwiki2MdItalicContentElementConversion
-
 
 # DEBUG
 from lib.debugging import dprint
@@ -27,7 +25,7 @@ class ConvertItalicPmwiki2MdTest(unittest.TestCase):
 		original = """''italic''"""
 		shouldLookLikeThis = "*italic*"
 		conversions = Conversions(Pmwiki2MdItalicContentElementConversion)
-		converted = ConvertibleContent(original, conversions, PmwikiContentElement, MdContentElement).convert()
+		converted = ConvertibleContent(original, conversions).convert()
 		self.assertEqual(converted, shouldLookLikeThis)
 
 #=======================================================================================
@@ -42,6 +40,21 @@ class ConversionsTest(unittest.TestCase):
 	def test_hasFrom(self):
 		conversions = Conversions(Pmwiki2MdItalicContentElementConversion)
 		self.assertEqual(conversions.hasFrom(PmwikiItalicContentElement), True)
+
+from pmwiki2md import Conversions, ConvertibleContent, PmwikiItalicContentElement
+class ConvertibleContentTest(unittest.TestCase):
+	
+	def test_nextConvertibleElementIndex(self):
+		content = "Cucumbers ''might'' be tomatoes if they were not already cucumbers."
+		conversions = Conversions(Pmwiki2MdItalicContentElementConversion)
+		convertibleContent = ConvertibleContent(content=content, conversions=conversions)
+		self.assertEqual(convertibleContent.nextConvertibleElement.index, 10)
+		
+	def test_nextConvertibleElementConversion(self):
+		content = "Cucumbers ''might'' be tomatoes if they were not already cucumbers."
+		conversions = Conversions(Pmwiki2MdItalicContentElementConversion)
+		convertibleContent = ConvertibleContent(content=content, conversions=conversions)
+		self.assertEqual(convertibleContent.nextConvertibleElement.conversion, Pmwiki2MdItalicContentElementConversion)
 
 #=======================================================================================
 	

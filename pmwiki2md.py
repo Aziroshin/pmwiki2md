@@ -6,7 +6,13 @@
 #=======================================================================================
 
 # Python
-from collections import UserList
+from collections import UserList, namedtuple
+
+#=======================================================================================
+# Named Tuples
+#=======================================================================================
+
+FoundConvertibleElement = namedtuple("FoundConvertibleElement", ["index", "conversion"])
 
 #=======================================================================================
 # Library
@@ -120,29 +126,55 @@ class ConvertibleContent(object):
 	
 	"""Tree of ConvertibleContentElements representing a convertible document."""
 	
-	def __init__(self, content, conversions, OriginalContentElementClass, ConvertedContentElementClass):
-		self.content = content
+	def __init__(self, content, conversions, ongoingConversions=[]):
+		self.original = content
 		self.conversions = conversions
-		self.originalElementTree = OriginalContentElementClass(conversions, self.content).parse()
-		self.convertedElementTree = self.originalElementTree.convert(self.conversions)
+		self.ongoingConversions = ongoingConversions
 		# Maybe it should be something like self.convertedElementTree = MdContentElement(self.originalElementTree)? #TODO
 		# Or self.convertedElementTree.convert(MdContentElement)? #TODO
 		self._converted = None
+		self._nextConvertibleElement = None
 		
-	#@property
+	@property
 	def converted(self):
 		if not self._converted == None:
 			return self._converted
 		else:
 			raise ConversionError("Attempted to retrieve converted content before conversion.")
 		
+	@property
+	def nextConvertibleElement(self):
+		"""Returns the index and conversion for the next convertible element.
+		Goes through all conversions in order to find out which one of them matches their
+		FROM in the original string with the lowest index.
+		
+		Returns: namedtuple("FoundConvertibleElement", ["index", "conversion"])
+		
+		Example: Consider the original string to look like this:
+		  "Cucumbers ''might'' be tomatoes if they were %not% already cucumbers."
+		  Also, we're assuming '' and % are both indicators of different formatting elements.
+		  In that case, we'd return the index at which '' was found in the string, as well as
+		  the conversion related to it.
+		This information is only determined once and then stored to be returned on
+		subsequent calls.
+		"""
+		if not self._nextConvertibleElement:
+			FoundConvertibleElementsByIndex = {}
+			for conversion in self.conversions:
+				FoundConvertibleElementsByIndex[self.original.find(conversion.FROM.BEGIN)] = conversion
+			nextConvertibleElementIndex = min(FoundConvertibleElementsByIndex.keys())
+			nextConvertibleElementConversion = FoundConvertibleElementsByIndex[nextConvertibleElementIndex]
+			self._nextConvertibleElement = FoundConvertibleElement(\
+				index = nextConvertibleElementIndex,\
+				conversion = nextConvertibleElementConversion)
+		return self._nextConvertibleElement
+		
 	def assembleConvertedContent(self):
 		for convertedElement in self.convertedElements:
 			self._converted = "".join(self._converted, convertedElement.converted)
 		
 	def convert(self):
-		for originalElement in self.originalElementTree:
-			self.convertedElements.append(originalElement.convert())
+		nextConvertibleElement = self.nextConvertibleElement
 
 class Pmwiki2MdConvertibleContent(ConvertibleContent):
 	
@@ -193,7 +225,6 @@ class PmwikiItalicContentElement(PmwikiContentElement):
 # Content Elements (Markdown)
 #==========================================================
 
-
 class MdItalicContentElement(MdContentElement): 
 	
 	""""""
@@ -202,7 +233,6 @@ class MdItalicContentElement(MdContentElement):
 	END = "*"
 	
 	pass#TODO
-	
 
 #==========================================================
 # Content Conversions (PM Wiki to Markdown)
