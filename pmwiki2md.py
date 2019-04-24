@@ -12,7 +12,8 @@ from collections import UserList, namedtuple
 # Named Tuples
 #=======================================================================================
 
-FoundConvertibleElement = namedtuple("FoundConvertibleElement", ["index", "conversion"])
+FoundConversionIndicator = namedtuple("FoundConversionIndicator", ["index", "conversion"])
+Content = namedtuple("Content", ["unconverted", "converted"])
 
 #=======================================================================================
 # Library
@@ -122,25 +123,73 @@ class MdContentElement(ContentElement):
 	
 	pass#TODO
 
+class ContentSplitByIndicator(object):
+	def __init__(self, content, indicator):
+		self.indicator = indicator
+		self.before, self.after = content.partition(indicator)[0::2]
+
+class ConversionContext(object):
+	
+	def __init__(self):
+		self.conversionStack = []
+	
+	@property
+	def currentConversion(self):
+		return self.conversionStack[-1]
+	
+	@property
+	def isEmpty(self):
+		"""Returns True if we're at the top of the context: There are no contextual conversions.
+		False otherwise."""
+		if self.conversionStack:
+			return False # Stack contains items. It's not empty.
+		else:
+			return True # Stack contains no items. It's empty.
+	
+	def addConversion(self, conversion):
+		self.conversionStack.append(conversion)
+	
+	def removeConversion(self, conversionToRemove):
+		conversionIndex = 0
+		for conversion in self.conversionStack:
+			if conversion == conversionToRemove:
+				self.conversionStack[conversionIndex].pop()
+			conversionIndex += 1
+			
+	def removeCurrentConversion(self):
+		self.conversionStack[-1].pop()
+			
+	def ascend(self):
+		"""Ascend in the stack; remove current conversion.
+		Returns True if it managed to ascend (there were conversions to remove).
+		Returns False if ascension wasn't possible, because we're at the top already."""
+		if self.isEmpty:
+			False
+		else:
+			self.removeCurrentConversion()
+			return True
+	
+	def currentConversionInconvertible(self):
+		return self.currentConversion.CONTAINS_INCONVERTIBLE_CONTENT
+
 class ConvertibleContent(object): 
 	
 	"""Tree of ConvertibleContentElements representing a convertible document."""
 	
-	def __init__(self, content, conversions, ongoingConversions=[]):
-		self.original = content
+	def __init__(self, contentToConvert, conversions, context):
+		self.content = [contentToConvert]
+		self.content.unconverted = contentToConvert
+		self.content.converted = None
 		self.conversions = conversions
-		self.ongoingConversions = ongoingConversions
+		self.context = context
 		# Maybe it should be something like self.convertedElementTree = MdContentElement(self.originalElementTree)? #TODO
 		# Or self.convertedElementTree.convert(MdContentElement)? #TODO
-		self._converted = None
 		self._nextConvertibleElement = None
+		self._endIndicators = None
 		
 	@property
-	def converted(self):
-		if not self._converted == None:
-			return self._converted
-		else:
-			raise ConversionError("Attempted to retrieve converted content before conversion.")
+	def isInconvertible(self):
+		return True in [inconvertible for inconvertible in self.context]
 		
 	@property
 	def nextConvertibleElement(self):
@@ -148,7 +197,7 @@ class ConvertibleContent(object):
 		Goes through all conversions in order to find out which one of them matches their
 		FROM in the original string with the lowest index.
 		
-		Returns: namedtuple("FoundConvertibleElement", ["index", "conversion"])
+		Returns: namedtuple("FoundConversionIndicator", ["index", "conversion"])
 		
 		Example: Consider the original string to look like this:
 		  "Cucumbers ''might'' be tomatoes if they were %not% already cucumbers."
@@ -159,22 +208,35 @@ class ConvertibleContent(object):
 		subsequent calls.
 		"""
 		if not self._nextConvertibleElement:
-			FoundConvertibleElementsByIndex = {}
+			FoundConversionIndicatorsByIndex = {}
 			for conversion in self.conversions:
-				FoundConvertibleElementsByIndex[self.original.find(conversion.FROM.BEGIN)] = conversion
-			nextConvertibleElementIndex = min(FoundConvertibleElementsByIndex.keys())
-			nextConvertibleElementConversion = FoundConvertibleElementsByIndex[nextConvertibleElementIndex]
-			self._nextConvertibleElement = FoundConvertibleElement(\
+				FoundConversionIndicatorsByIndex[self.content.unconverted.find(conversion.FROM.BEGIN)] = conversion
+			nextConvertibleElementIndex = min(FoundConversionIndicatorsByIndex.keys())
+			nextConvertibleElementConversion = FoundConversionIndicatorsByIndex[nextConvertibleElementIndex]
+			self._nextConvertibleElement = FoundConversionIndicator(\
 				index = nextConvertibleElementIndex,\
 				conversion = nextConvertibleElementConversion)
 		return self._nextConvertibleElement
 		
-	def assembleConvertedContent(self):
-		for convertedElement in self.convertedElements:
-			self._converted = "".join(self._converted, convertedElement.converted)
+	@property
+	def endIndicators(self):
+		FoundConversionIndicatorsByIndex = {}
+		if not self._endIndicators:
+			if self.isInconvertible:
+				self.unconverted.find(self.context.currentConversion.FROM.END)
+				
+			else:
+				for conversion in self.context.conversionStack:
+					
+		return self._endIndicators
 		
 	def convert(self):
-		nextConvertibleElement = self.nextConvertibleElement
+		#if not self.isInconvertible:
+			#nextConvertibleElement = self.nextConvertibleElement
+			#contentSplitByIndicator(nextConvertibleElement.conversion.FROM.convert())
+		for conversion in self.conversions:
+			self.content = conversion.convert(self.content)
+		
 
 class Pmwiki2MdConvertibleContent(ConvertibleContent):
 	
@@ -218,6 +280,7 @@ class PmwikiItalicContentElement(PmwikiContentElement):
 	
 	BEGIN = "''"
 	END = "''"
+	CONTAINS_INCONVERTIBLE_CONTENT = False
 	
 	pass#TODO
 	
