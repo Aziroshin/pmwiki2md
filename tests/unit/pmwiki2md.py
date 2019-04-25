@@ -15,24 +15,20 @@ import time
 # Tests
 #=======================================================================================
 
-from pmwiki2md import Content, Pmwiki2MdItalicConversion, Conversions
+from pmwiki2md import Content, Conversions
 class ConversionTests(unittest.TestCase):
 	
+	def compareConverted(self, converted, shouldLookLike):
+		for lookalike in shouldLookLike:
+			self.assertEqual(converted.pop(0).content, lookalike)
+	
 	def test_Pmwiki2MdItalicConversion(self):
+		from pmwiki2md import Pmwiki2MdItalicConversion
 		original = Content("Cucumbers ''might'' be tomatoes.")
 		shouldLookLike = ["Cucumbers ", "_", "might", "_", " be tomatoes."]
 		conversions = Conversions(Pmwiki2MdItalicConversion)
 		converted = Pmwiki2MdItalicConversion().convert(original)
-		dprint("\n")
-		dprint([c.content for c in original])
-		dprint("\n")
-		dprint(shouldLookLike)
-		dprint("\n")
-		dprint([c.content for c in converted])
-		dprint("\n")
-		#self.assertEqual(content[0].content, "Cucumbers _might_ be tomatoes if they were not already cucumbers.")
-		for lookalike in shouldLookLike:
-			self.assertEqual(converted.pop(0).content, lookalike)
+		self.compareConverted(converted, shouldLookLike)
 
 #=======================================================================================
 	

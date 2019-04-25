@@ -124,7 +124,6 @@ class ConversionBySingleCodeReplacement(Conversion):
 	def convert(self, content):
 		alteredContent = content.copy()
 		for element in content:
-			print([c.content for c in alteredContent])
 			if element.availableForConversion:
 				subElements = self.getSubElements(element)
 				convertedSubElements = self.interleaveWithConvertedIndicators(subElements)
