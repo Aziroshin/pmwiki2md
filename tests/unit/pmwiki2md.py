@@ -38,10 +38,22 @@ class ConversionTests(unittest.TestCase):
 		shouldLookLike = ["Cucumbers ", "_", "might", "_", " be tomatoes."]
 		self.compareConverted(original, shouldLookLike, conversion)
 	
+	def test_Pmwiki2MdBoldConversion(self):
+		from pmwiki2md import Pmwiki2MdBoldConversion as conversion
+		original = Content("Cucumbers '''might''' be tomatoes.")
+		shouldLookLike = ["Cucumbers ", "__", "might", "__", " be tomatoes."]
+		self.compareConverted(original, shouldLookLike, conversion)
+		
+	def test_Pmwiki2MdItalicBoldConversion(self):
+		from pmwiki2md import Pmwiki2MdItalicBoldConversion as conversion
+		original = Content("Cucumbers '''''might''''' be tomatoes.")
+		shouldLookLike = ["Cucumbers ", "**_", "might", "**_", " be tomatoes."]
+		self.compareConverted(original, shouldLookLike, conversion)
+	
 	def test_Pmwiki2MdTitle1Conversion(self):
 		from pmwiki2md import Pmwiki2MdTitle1Conversion as conversion
-		original = Content("!Cucumbers might be tomatoes.")
-		shouldLookLike = ["", "#", "Cucumbers might be tomatoes."]
+		original = Content("\n! Cucumbers might be tomatoes.")
+		shouldLookLike = ["", "\n# ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, conversion)
 
 #=======================================================================================

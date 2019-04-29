@@ -88,14 +88,6 @@ class Conversion(object):
 	def convert(self):
 		pass#Override
 
-class ConversionSubElementsprocessor(object):
-	def getSubElements(self, subElements):
-		pass#OVERRIDE
-
-class ConversionLeftAdjacentSubElementsProcessor(object):
-	def getSubElements(self, element):
-		element.content.split(self.old)
-
 class ConversionBySingleCodeReplacement(Conversion):
 	
 	@property
@@ -142,17 +134,23 @@ class Conversions(UserList):
 class Pmwiki2MdItalicConversion(ConversionBySingleCodeReplacement):
 	OLD = "''"
 	NEW = "_"
+class Pmwiki2MdBoldConversion(ConversionBySingleCodeReplacement):
+	OLD = "'''"
+	NEW = "__"
+class Pmwiki2MdItalicBoldConversion(ConversionBySingleCodeReplacement):
+	OLD = "'''''"
+	NEW = "**_"
 class Pmwiki2MdTitle1Conversion(ConversionBySingleCodeReplacement):
-	OLD = "!"
-	NEW = "#"
+	OLD = "\n! "
+	NEW = "\n# "
 class Pmwiki2MdTitle2Conversion(ConversionBySingleCodeReplacement):
-	OLD = "!!"
-	NEW = "##"
+	OLD = "\n!! "
+	NEW = "\n## "
 class Pmwiki2MdTitle3Conversion(ConversionBySingleCodeReplacement):
-	OLD = "!!!"
-	NEW = "###"
+	OLD = "\n!!! "
+	NEW = "\n### "
 class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
-	OLD = "*"
+	OLD = "* "
 	NEW = "* "
 class Pmwiki2MdList2Conversion(ConversionBySingleCodeReplacement):
 	OLD = "**"
