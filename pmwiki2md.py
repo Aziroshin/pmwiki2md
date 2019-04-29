@@ -7,7 +7,7 @@
 
 # Python
 from collections import UserList, namedtuple
-import copy
+import copy, os
 
 #=======================================================================================
 # Named Tuples
@@ -118,6 +118,43 @@ class ConversionBySingleCodeReplacement(Conversion):
 				alteredContent.replaceElement(element, convertedSubElements)
 		return alteredContent
 
+class ListConversion(ConversionBySingleCodeReplacement):
+
+	def convert(self, content):
+		
+		"""Convert nested lists from PmWiki to Markdown.
+		The class attribute OLD just takes the basic indication character
+		used to indicate a certain type of PmWiki list.
+		The class attribute NEW works the same, but for the markdown
+		counterpart."""
+		# Technically, this first takes the OLD and NEW indicators
+		# as they were specified as class attributes and then
+		# assembles the actual, final indicators that will be used
+		# for conversion by the base class.
+		
+		# Indent the markdown list indicator by two spaces per list level.
+		level = 1
+		while True:
+			
+			indentedNew = "".join(["  " for level in range(0, level)]+[self.new])
+			theNewOld = os.linesep+self.old+" "
+			theNewNew = os.linesep+indentedNew+" "
+			
+			# Now, we spoof what we need to for our parent class to be none the wiser.
+			self.old = theNewOld
+			self.new = theNewNew
+			
+			# Now, our parent class can take over.
+			convertedContent = super().convert(content)
+			
+			# There might be a better way to determine that
+			# there are no lists of any greater levels anymore.
+			# Right now, we're just looking at whether there
+			# was anything to convert during the last pass.
+			if len(convertedContent) == len(content):
+				break
+		return convertedContent
+
 class Conversions(UserList):
 	
 	def __init__(self, *conversions):
@@ -146,12 +183,47 @@ class Pmwiki2MdTitle3Conversion(ConversionBySingleCodeReplacement):
 	OLD = "\n!!! "
 	NEW = "\n### "
 
+class Pmwiki2MdBulletListConversion(ListConversion):
+	OLD = "*"
+	NEW = "-"
+
 class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
 	OLD = "*"
-	NEW = "- "
+	NEW = "-"
 	def convert(self, content):
-		pass#TODO
-		return super().convert(content)
+		
+		"""Convert nested lists from PmWiki to Markdown.
+		The class attribute OLD just takes the basic indication character
+		used to indicate a certain type of PmWiki list.
+		The class attribute NEW works the same, but for the markdown
+		counterpart."""
+		# Technically, this first takes the OLD and NEW indicators
+		# as they were specified as class attributes and then
+		# assembles the actual, final indicators that will be used
+		# for conversion by the base class.
+		
+		# Indent the markdown list indicator by two spaces per list level.
+		level = 1
+		while True:
+			
+			indentedNew = "".join(["  " for level in range(0, level)]+[self.new])
+			theNewOld = os.linesep+self.old+" "
+			theNewNew = os.linesep+indentedNew+" "
+			
+			# Now, we spoof what we need to for our parent class to be none the wiser.
+			self.old = theNewOld
+			self.new = theNewNew
+			
+			# Now, our parent class can take over.
+			convertedContent = super().convert(content)
+			
+			# There might be a better way to determine that
+			# there are no lists of any greater levels anymore.
+			# Right now, we're just looking at whether there
+			# was anything to convert during the last pass.
+			if len(convertedContent) == len(content):
+				break
+		return convertedContent
 
 class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	OLD = "\\"

@@ -56,6 +56,12 @@ class ConversionTests(unittest.TestCase):
 		shouldLookLike = ["", "\n# ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, conversion)
 
+	def test_Pmwiki2Md1LevelBulletListConversion(self):
+		from pmwiki2md import Pmwiki2MdBulletListConversion as conversion
+		original = Content("\n* Cucumbers might be tomatoes.")
+		shouldLookLike = ["", "\n* ", "Cucumbers might be tomatoes."]
+		self.compareConverted(original, shouldLookLike, conversion)
+
 #=======================================================================================
 	
 if __name__ == "__main__":
