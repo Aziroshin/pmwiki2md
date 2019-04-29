@@ -85,18 +85,14 @@ class ConvertibleDocument(object):
 
 class Conversion(object):
 	
-	def convert(self):
+	def convert(self, content):
 		pass#Override
 
 class ConversionBySingleCodeReplacement(Conversion):
 	
-	@property
-	def old(self):
-		return self.__class__.OLD
-	
-	@property
-	def new(self):
-		return self.__class__.NEW
+	def __init__(self):
+		self.old = self.__class__.OLD
+		self.new = self.__class__.NEW
 	
 	def getSubElements(self, element):
 		return [ContentElement(subElement) for subElement in element.content.split(self.old)]
@@ -149,15 +145,14 @@ class Pmwiki2MdTitle2Conversion(ConversionBySingleCodeReplacement):
 class Pmwiki2MdTitle3Conversion(ConversionBySingleCodeReplacement):
 	OLD = "\n!!! "
 	NEW = "\n### "
+
 class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
-	OLD = "* "
-	NEW = "* "
-class Pmwiki2MdList2Conversion(ConversionBySingleCodeReplacement):
-	OLD = "**"
-	NEW = "  * "
-class Pmwiki2MdList3Conversion(ConversionBySingleCodeReplacement):
-	OLD = "***"
-	NEW = "    * "
+	OLD = "*"
+	NEW = "- "
+	def convert(self, content):
+		pass#TODO
+		return super().convert(content)
+
 class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	OLD = "\\"
 	NEW = "\n\n"
