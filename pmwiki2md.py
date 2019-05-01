@@ -9,6 +9,10 @@
 from collections import UserList, namedtuple
 import copy, os
 
+# Debugging
+import time
+from lib.debugging import dprint, cdprint
+
 #=======================================================================================
 # Named Tuples
 #=======================================================================================
@@ -42,11 +46,15 @@ class ContentElement(object):
 class Content(UserList):
 	
 	def __init__(self, initialData=[]):
+		dprint("initialData type: ", type(initialData))
 		if type(initialData) == list:
+			dprint("initialData is list: ", initialData)
 			self.data = initialData
 		elif type(initialData) == UserList:
+			dprint("initialData is UserList: ", initialData)
 			self.data = initialData.data
 		else:
+			dprint("initialData is something else: ", initialData)
 			self.data = [ContentElement(initialData)]
 	
 	def getElementIndex(self, element):
@@ -68,7 +76,20 @@ class Content(UserList):
 			self.insert(index, replacementElement)
 	def copy(self):
 		new = self.__class__()
-		[new.append(element) for element in self.data]
+		dprint("self, self.data, new, class, class: \n", self, "\n", self.data, "\n", new, "\n", Content(), "\n", Content())
+
+		i = 0
+		for element in self.data:
+			new.append(element)
+			#print(len(self.data))
+			i += 1
+			if i == 10:
+				#raise Exception("INFINITE LOOP")
+				time.sleep(100000000)
+		
+		#[dprint("Copying forever?"+str(new.append(element))) for element in self.data]
+		#dprint("REMOVE ABOVE LINE AND UNCOMMENT LINE BELOW.")
+		#[new.append(element) for element in self.data]
 		return new
 
 class ConvertibleDocument(object): 
@@ -110,7 +131,11 @@ class ConversionBySingleCodeReplacement(Conversion):
 		return convertedSubElements
 	
 	def convert(self, content):
+		dprint("Content class comparison in super().convert before copy: ", Content(), Content())
+		dprint("content object id before copy: ", id(content))
 		alteredContent = content.copy()
+		dprint("content alteredContent, content ids after copy: ", id(alteredContent), id(content))
+		dprint("Content class comparison in super().convert after copy: ", Content(), Content())
 		for element in content:
 			if element.availableForConversion:
 				subElements = self.getSubElements(element)
@@ -134,25 +159,33 @@ class ListConversion(ConversionBySingleCodeReplacement):
 		
 		# Indent the markdown list indicator by two spaces per list level.
 		level = 1
+		convertedContent = content
 		while True:
-			
 			indentedNew = "".join(["  " for level in range(0, level)]+[self.new])
 			theNewOld = os.linesep+self.old+" "
 			theNewNew = os.linesep+indentedNew+" "
 			
-			# Now, we spoof what we need to for our parent class to be none the wiser.
+			# We spoof what we need to for our parent class to be none the wiser.
 			self.old = theNewOld
 			self.new = theNewNew
 			
-			# Now, our parent class can take over.
-			convertedContent = super().convert(content)
-			
+			# Our parent class can take over.
+			dprint("content before super()", convertedContent)
+			dprint("Content class comparison before super(): ", Content(), Content())
+			convertedContent = super().convert(convertedContent)
+			dprint("content after super()", convertedContent)
+			dprint("Content class comparison after super(): ", Content(), Content())
+			cdprint(convertedContent)
 			# There might be a better way to determine that
 			# there are no lists of any greater levels anymore.
 			# Right now, we're just looking at whether there
 			# was anything to convert during the last pass.
+			print("LALA1")
 			if len(convertedContent) == len(content):
+				print("LALA BREAK")
 				break
+			print("LALA2")
+		print("LALA3")
 		return convertedContent
 
 class Conversions(UserList):
@@ -187,43 +220,43 @@ class Pmwiki2MdBulletListConversion(ListConversion):
 	OLD = "*"
 	NEW = "-"
 
-class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
-	OLD = "*"
-	NEW = "-"
-	def convert(self, content):
+#class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
+	#OLD = "*"
+	#NEW = "-"
+	#def convert(self, content):
 		
-		"""Convert nested lists from PmWiki to Markdown.
-		The class attribute OLD just takes the basic indication character
-		used to indicate a certain type of PmWiki list.
-		The class attribute NEW works the same, but for the markdown
-		counterpart."""
-		# Technically, this first takes the OLD and NEW indicators
-		# as they were specified as class attributes and then
-		# assembles the actual, final indicators that will be used
-		# for conversion by the base class.
+		#"""Convert nested lists from PmWiki to Markdown.
+		#The class attribute OLD just takes the basic indication character
+		#used to indicate a certain type of PmWiki list.
+		#The class attribute NEW works the same, but for the markdown
+		#counterpart."""
+		## Technically, this first takes the OLD and NEW indicators
+		## as they were specified as class attributes and then
+		## assembles the actual, final indicators that will be used
+		## for conversion by the base class.
 		
-		# Indent the markdown list indicator by two spaces per list level.
-		level = 1
-		while True:
+		## Indent the markdown list indicator by two spaces per list level.
+		#level = 1
+		#while True:
 			
-			indentedNew = "".join(["  " for level in range(0, level)]+[self.new])
-			theNewOld = os.linesep+self.old+" "
-			theNewNew = os.linesep+indentedNew+" "
+			#indentedNew = "".join(["  " for level in range(0, level)]+[self.new])
+			#theNewOld = os.linesep+self.old+" "
+			#theNewNew = os.linesep+indentedNew+" "
 			
-			# Now, we spoof what we need to for our parent class to be none the wiser.
-			self.old = theNewOld
-			self.new = theNewNew
+			## Now, we spoof what we need to for our parent class to be none the wiser.
+			#self.old = theNewOld
+			#self.new = theNewNew
 			
-			# Now, our parent class can take over.
-			convertedContent = super().convert(content)
+			## Now, our parent class can take over.
+			#convertedContent = super().convert(content)
 			
-			# There might be a better way to determine that
-			# there are no lists of any greater levels anymore.
-			# Right now, we're just looking at whether there
-			# was anything to convert during the last pass.
-			if len(convertedContent) == len(content):
-				break
-		return convertedContent
+			## There might be a better way to determine that
+			## there are no lists of any greater levels anymore.
+			## Right now, we're just looking at whether there
+			## was anything to convert during the last pass.
+			#if len(convertedContent) == len(content):
+				#break
+		#return convertedContent
 
 class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	OLD = "\\"
