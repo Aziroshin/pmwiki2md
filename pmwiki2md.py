@@ -38,10 +38,47 @@ class ContentSplitByIndicator(object):
 		self.before, self.after = content.partition(indicator)[0::2]
 
 class ContentElement(object):
+	
+	ContentElementPartitions = namedtuple("ContentElementPartitions", ["before", "separator", "after"])
+	
 	def __init__(self, content, conversions=[], availableForConversion=True):
 		self.content = content
 		self.conversions = conversions
 		self.availableForConversion = availableForConversion
+		
+	def copy(self):
+		"""Return a shallow copy of this object."""
+		return copy.shallowcopy(self)
+	
+	def copyWithNewContent(self, newContent):
+		"""Return a copy of this object, except with a different, specified content string."""
+		copy = self.copy()
+		copy.content = newContent
+		return copy
+		
+	def getPartitioned(self, contentParts):
+		
+		"""Take a .partition result 3-tuple and return self.__class__ objects for each string.
+		Returns:
+		  - self.__class__.ContentElementPartitions 3-namedtuple, with each attribute holding
+		  a self.__class__ object with the corresponding .partition result string:
+		    [0]: before
+			[1]: separator
+			[2]: after"""
+		
+		contentElementParts = self.__class__.ContentElementPartitions()
+		
+		contentElementParts.before = self.copyWithNewContent(contentParts[0])
+		contentElementParts.separator = self.copyWithNewContent(contentParts[1])
+		contentElementParts.after = self.copyWithNewContent(contentParts[2])
+		
+		return contentElementParts
+		
+	def partition(self, separator):
+		return self.getPartitioned(self.content.partition(separator))
+	
+	def rpartition(self, separator):
+		return self.getPartitioned(self.content.rpartition(separator))
 
 class Content(UserList):
 	
@@ -111,7 +148,7 @@ class Content(UserList):
 		#[new.append(element) for element in self.data]
 		return new
 
-class ConvertibleDocument(object): 
+class ConvertibleDocument(object):
 	
 	"""Tree of ConvertibleContentElements representing a convertible document."""
 	
@@ -126,7 +163,7 @@ class ConvertibleDocument(object):
 class Conversion(object):
 	
 	def convert(self, content):
-		pass#Override
+		pass#OVERRIDE
 
 class ElementByElementConversion(Conversion):
 	
@@ -150,6 +187,7 @@ class ElementByElementConversion(Conversion):
 		return subElements#OVERRIDE
 	
 	def convert(self, content):
+		"""Goes through each ContentElement and converts the ones marked availableForConversion."""
 		alteredContent = content.copy()
 		for element in content:
 			if element.availableForConversion:
@@ -166,6 +204,50 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 	def __init__(self):
 		self.begin = self.__class__.BEGIN
 		self.end = self.__class__.END
+		
+	def getSubElements(self, element):
+		
+		"""Get a list of new (sub) content elements for any .begin/.end delimited portions found in the specified element.
+		
+		Inspects the specified content element's content for any sub-strings that start and start
+		with .begin and end with .end, then gets copies of the original element, but with the strings
+		of the so identified elements, and adds them to a list in order.
+		As the begin and end identifiers also get their own content element, in practice, that means
+		that every successfully identified sub-string results in three content elements.
+		
+		Example: The return value for one content element representing the string "[[a]] [[b]]", with "[[" being
+		.begin and "]]" .end, would be a list of 6 content element objects, representing the following 6 strings:
+		["[[", "a", "]]", "[[", "b", "]]"]
+		Note: We return a list of content element objects, not strings, so the above list isn't literally
+		representing our return value.
+		"""
+		
+		subElements = []
+		unprocessedElement = element
+		
+		while True:
+			
+			# Get irrelevant part (partitionedByBegin.before) and relevant part plus
+			# the part we'll process in future iterations (partitionedByBegin.after)
+			partitionedByBegin = unprocessedElement.partition(self.begin)
+			
+			# If partitionedByBegin.separator is empty, that means there's nothing left to process.
+			if partitionedByBegin.after == "":
+				break
+			
+			# Separate relevant part (our sub element) from future iteration part.
+			partition = partitionedByBegin.after.partition(self.end)
+			
+			# Get our spaghettis in a row.
+			elementBeginIndicator = partitionedByBegin.separator
+			subElement = partition.before
+			elementEndIndicator = partition.separator
+			unprocessedElement = partition.after # for future iterations.
+			
+			# Add our newly found content elements to the list of elements we'll eventually return.
+			subElements+[elementBeginIndicator, subElement, elementEndIndicator]
+			
+		return subElements
 
 class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	
@@ -212,6 +294,7 @@ class ListConversion(ConversionBySingleCodeReplacement):
 		used to indicate a certain type of PmWiki list.
 		The class attribute NEW works the same, but for the markdown
 		counterpart."""
+		
 		# Technically, this first takes the OLD and NEW indicators
 		# as they were specified as class attributes and then
 		# assembles the actual, final indicators that will be used
@@ -322,6 +405,6 @@ class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 class Pmwiki2MdCodeBlockConversion(Conversion):
 	def convert(self):
 		pass#TODO
-class Pmwiki2MdLinkConversion(Conversion):
+class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToSomething):
 	def convert(self, content):
 		pass
