@@ -128,16 +128,64 @@ class Conversion(object):
 	def convert(self, content):
 		pass#Override
 
-class ConversionBySingleCodeReplacement(Conversion):
+class ElementByElementConversion(Conversion):
+	
+	def getSubElements(self, element):
+		
+		"""Breaks the element down into other elements.
+		Override in sub-class to meet the specific break-down
+		needs of the conversion in question.
+		
+		Returns the specified element unaltered if not overriden."""
+		
+		return element#OVERRIDE
+	
+	def convertSubElements(self, subElements):
+		
+		"""Takes elements (probably broken down by .getSubElements) and does stuff.
+		Override in sub-class to determine what stuff that is.
+		
+		Returns the specified element list unaltered if not overriden."""
+		
+		return subElements#OVERRIDE
+	
+	def convert(self, content):
+		alteredContent = content.copy()
+		for element in content:
+			if element.availableForConversion:
+				subElements = self.getSubElements(element)
+				convertedSubElements = self.convertSubElements(subElements)
+				alteredContent.replaceElement(element, convertedSubElements)
+		return alteredContent
+
+class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
+	
+	BEGIN = None
+	END = None
+	
+	def __init__(self):
+		self.begin = self.__class__.BEGIN
+		self.end = self.__class__.END
+
+class ConversionBySingleCodeReplacement(ElementByElementConversion):
+	
+	"""Replaces single occurrences with something else; no context, no frills.
+	Sub-classes are configured by setting two class attributes:
+	  - OLD (str): The occurrence to be replaced.
+	  - NEW (str): What to replace it with."""
+	
+	OLD = None
+	NEW = None
 	
 	def __init__(self):
 		self.old = self.__class__.OLD
 		self.new = self.__class__.NEW
 	
-	def getSubElements(self, element):
-		return [ContentElement(subElement) for subElement in element.content.split(self.old)]
-	
 	def interleaveWithConvertedIndicators(self, subElements):
+		"""Interleaves the list of content elements with ones representing NEW.
+		This is based on the assumption that said list came to be by splitting
+		a content element by OLD.
+		Assumption example: """
 		convertedSubElements = []
 		for subElement in subElements:
 			convertedSubElements.append(subElement)
@@ -149,19 +197,11 @@ class ConversionBySingleCodeReplacement(Conversion):
 			convertedSubElements.pop()
 		return convertedSubElements
 	
-	def convert(self, content):
-		#dprint("Content before copying: ", content)
-		#dprint("Content class comparison in super().convert before copy: ", Content(), Content())
-		#dprint("content object id before copy: ", id(content))
-		alteredContent = content.copy()
-		#dprint("content alteredContent, content ids after copy: ", id(alteredContent), id(content))
-		#dprint("Content class comparison in super().convert after copy: ", Content(), Content())
-		for element in content:
-			if element.availableForConversion:
-				subElements = self.getSubElements(element)
-				convertedSubElements = self.interleaveWithConvertedIndicators(subElements)
-				alteredContent.replaceElement(element, convertedSubElements)
-		return alteredContent
+	def getSubElements(self, element):
+		return [ContentElement(subElement) for subElement in element.content.split(self.old)]
+	
+	def convertSubElements(self, subElements):
+		return self.interleaveWithConvertedIndicators(subElements)
 
 class ListConversion(ConversionBySingleCodeReplacement):
 
@@ -283,5 +323,5 @@ class Pmwiki2MdCodeBlockConversion(Conversion):
 	def convert(self):
 		pass#TODO
 class Pmwiki2MdLinkConversion(Conversion):
-	def convert(self):
-		pass#TODO
+	def convert(self, content):
+		pass
