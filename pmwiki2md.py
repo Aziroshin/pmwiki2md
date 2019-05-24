@@ -48,7 +48,7 @@ class ContentElement(object):
 		
 	def copy(self):
 		"""Return a shallow copy of this object."""
-		return copy.shallowcopy(self)
+		return copy.copy(self)
 	
 	def copyWithNewContent(self, newContent):
 		"""Return a copy of this object, except with a different, specified content string."""
@@ -66,12 +66,15 @@ class ContentElement(object):
 			[1]: separator
 			[2]: after"""
 		
-		contentElementParts = self.__class__.ContentElementPartitions()
+		contentElementParts = self.__class__.ContentElementPartitions(\
+			before = self.copyWithNewContent(contentParts[0]),\
+			separator = self.copyWithNewContent(contentParts[1]),\
+			after = self.copyWithNewContent(contentParts[2])
+		)
 		
-		contentElementParts.before = self.copyWithNewContent(contentParts[0])
-		contentElementParts.separator = self.copyWithNewContent(contentParts[1])
-		contentElementParts.after = self.copyWithNewContent(contentParts[2])
-		
+		#contentElementParts.before = self.copyWithNewContent(contentParts[0])
+		#contentElementParts.separator = self.copyWithNewContent(contentParts[1])
+		#contentElementParts.after = self.copyWithNewContent(contentParts[2])
 		return contentElementParts
 		
 	def partition(self, separator):
@@ -198,8 +201,8 @@ class ElementByElementConversion(Conversion):
 
 class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 	
-	BEGIN = None
-	END = None
+	BEGIN = None #OVERRIDE
+	END = None #OVERRIDE
 	
 	def __init__(self):
 		self.begin = self.__class__.BEGIN
@@ -219,34 +222,43 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		.begin and "]]" .end, would be a list of 6 content element objects, representing the following 6 strings:
 		["[[", "a", "]]", "[[", "b", "]]"]
 		Note: We return a list of content element objects, not strings, so the above list isn't literally
-		representing our return value.
+		resembling an actual return value.
 		"""
 		
 		subElements = []
 		unprocessedElement = element
 		
 		while True:
+			#dprint("Unprocessed:", unprocessedElement.content)
 			
 			# Get irrelevant part (partitionedByBegin.before) and relevant part plus
 			# the part we'll process in future iterations (partitionedByBegin.after)
 			partitionedByBegin = unprocessedElement.partition(self.begin)
+			#dprint(partitionedByBegin)
+			
+			#dprint("partitionedByBegin:", ",".join([item.content for item in  partitionedByBegin]))
 			
 			# If partitionedByBegin.separator is empty, that means there's nothing left to process.
-			if partitionedByBegin.after == "":
+			if partitionedByBegin.after.content == "":
 				break
 			
 			# Separate relevant part (our sub element) from future iteration part.
-			partition = partitionedByBegin.after.partition(self.end)
+			partitionedByEnd = partitionedByBegin.after.partition(self.end)
+			#dprint("partitionedByEnd:", ",".join([item.content for item in partitionedByEnd]))
 			
 			# Get our spaghettis in a row.
 			elementBeginIndicator = partitionedByBegin.separator
-			subElement = partition.before
-			elementEndIndicator = partition.separator
-			unprocessedElement = partition.after # for future iterations.
+			subElement = partitionedByEnd.before
+			elementEndIndicator = partitionedByEnd.separator
+			unprocessedElement = partitionedByEnd.after # for future iterations.
 			
 			# Add our newly found content elements to the list of elements we'll eventually return.
-			subElements+[elementBeginIndicator, subElement, elementEndIndicator]
+			subElements = subElements+[elementBeginIndicator, subElement, elementEndIndicator]
 			
+		# If subElements is still an empty list, we haven't found anything to convert.
+		if not subElements:
+			subElements.append(element)
+		
 		return subElements
 
 class ConversionBySingleCodeReplacement(ElementByElementConversion):
