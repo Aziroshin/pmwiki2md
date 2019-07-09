@@ -82,6 +82,7 @@ class ContentElement(object):
 	
 	def rpartition(self, separator):
 		return self.getPartitioned(self.content.rpartition(separator))
+	
 
 class Content(UserList):
 	
@@ -98,17 +99,23 @@ class Content(UserList):
 			#
 			# If there is any further weirdness of the sort, this is probably
 			# a good starting point.
-			#dprint("initialData is None: ", initialData)
 			self.data = []
 		elif type(initialData) is list:
-			#dprint("initialData is list: ", initialData)
 			self.data = initialData
 		elif type(initialData) is UserList:
-			#dprint("initialData is UserList: ", initialData)
 			self.data = initialData.data
 		else:
-			#dprint("initialData is something else: ", initialData)
 			self.data = [ContentElement(initialData)]
+	
+	@property
+	def string(self):
+		string = ""
+		for item in self.data:
+			if type(item) is self.__class__:
+				string = string+item.string  
+			else: # Must be ContentElement
+				string = string+item.content
+		return string
 	
 	def getElementIndex(self, element):
 		
@@ -346,6 +353,12 @@ class Conversions(UserList):
 	def __init__(self, *conversions):
 		self.data = conversions
 		
+	def convert(self, content):
+		contentBeingConverted = content
+		for Conversion in self.data:
+			contentBeingConverted = Conversion().convert(contentBeingConverted)
+		return contentBeingConverted
+	
 #==========================================================
 # Conversions
 #==========================================================
@@ -414,9 +427,18 @@ class Pmwiki2MdBulletListConversion(ListConversion):
 class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	OLD = "\\"
 	NEW = "\n\n"
+
 class Pmwiki2MdCodeBlockConversion(Conversion):
 	def convert(self):
 		pass#TODO
+
 class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToSomething):
 	def convert(self, content):
 		pass
+
+class AllConversions(Conversions):
+	def __init__(self):
+		self.data = [\
+			Pmwiki2MdBoldConversion,\
+			Pmwiki2MdItalicConversion
+			]
