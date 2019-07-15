@@ -45,6 +45,10 @@ class TestFilePair(object):
 		
 class FileConversions(unittest.TestCase):
 	
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.maxDiff = None
+	
 	@property
 	def conversionsBaseDir(self):
 		#return os.listdir(os.path.dirname(__file__))
@@ -114,3 +118,6 @@ class FileConversions(unittest.TestCase):
 		
 	def test_twoElementsWithLinebreak(self):
 		self.runOneFileTest("twoElementsWithLinebreak")
+		
+	def test_hallowelt(self):
+		self.runOneFileTest("hallowelt")

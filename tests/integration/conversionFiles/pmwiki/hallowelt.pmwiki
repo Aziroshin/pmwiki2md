@@ -1,0 +1,92 @@
+Hallo Welt, \
+willkommen im Wiki. 
+
+Es gibt verschiedene Textarten wie ''kursiv'' '''fett''' {+unterstrichen+} {-durchgestrichen-} [-klein-] [--kleiner--] [+gross+] [++grösser++] '^hochgestellt^' '_tiefgestellt_'.
+
+Auch Absätze gibt es und Listen
+* Unnumerierte Liste text text text text text text text
+** Link auf Wikiseite [[HomePage]], ein WikiWortMitGrossUndKleinbuchstaben, ne Webseite mit sichtbarem Link [[http://map.search.ch]] oder Linktext  [[http://map.search.ch|Kartensuche]]
+**externes Bild mit Mouseover http://upload.wikimedia.org/wikipedia/meta/2/2a/Nohat-logo-nowords-bgwhite-200px.jpg"Das Bild von DEM Wiki" oder ein lokales Bild mit Mouseover Path:/images/members.gif"Das ist ein Bild" 
+
+* text text text text text text text text text
+
+# Numerierte Liste text text text text text text
+## text text text text text text text text text
+# text text text text text text text text text
+
+!Überschrift 1
+text text text text text text text text texttext text text text text text text text texttext text text text text text text text text text texttext text text text text text text text text 
+Neue Zeile ohne \\ am Ende gibt keine neue Zeile text text text text texttext text text text text text text text texttext text text text text text text text text\\
+Mit hingegen schon text text text text texttext text text text text text text text texttext text text text text text text 
+
+!!Überschrift 1.1 der Code
+Vorformatierten text:
+[@
+for (i=0; i<$counter; i++)
+{
+   doSomething();
+}
+Alpha = new Alpha();
+writeout(Alpha);
+@]
+
+Auch im Editor [@ nano test.txt @] kann man Text editieren und mit[@Ctrl+O@] speichern.
+
+!Überschrift 2 zur Tabelle
+||class="wikitable"
+||!Task ||!Termin ||!Verantwortlich ||
+||Aufräumen||1.1.2007||Sepp Meier||
+||Protokoll schreiben||12.12.2006||Jenny Stage||
+
+
+*Wiki:
+**%newwin%[[http://social.technet.microsoft.com/wiki]]%%
+
+*Blogs:
+**http://blogs.technet.com/
+
+*Forums:
+**%newwin%[[http://social.technet.microsoft.com/Forums/en-us/categories/]]%%
+**%newwin%[[http://social.msdn.microsoft.com/Forums/en-US/categories]]%%
+
+*Downloads:
+**%newwin%[[http://msdn.microsoft.com/en-us/aa570309]]%%
+**%newwin%[[http://technet.microsoft.com/en-us/bb403698.aspx]]%%
+
+*Support:
+*%newwin%[[http://support.microsoft.com/search/?adv=1]]%% -> http://support.microsoft.com/kb/xxxx/en
+**%newwin%[[http://msdn.microsoft.com/en-us/hh361695]]%%
+*%newwin%[[http://support.microsoft.com/select/?target=hub|Product Solution Centers]]%%
+
+*Library:
+**%newwin%[[http://technet.microsoft.com/en-us/library/]]%%
+**%newwin%[[http://msdn.microsoft.com/en-us/library/ms537180(v=vs.85).aspx]]%%
+**%newwin%[[http://msdn.microsoft.com/library/default.aspx]]%%
+**%newwin%[[http://code.msdn.microsoft.com/]]%%
+
+In unserer digitalen Zeit ist es sinnvoll, zuerst '''das Richtige (effektiv)''' zu tun, bevor man anfängt, '''es richtig (effizient)''' zu tun.
+
+!Notfallverhalten
+#'''ROT''' - '''Schauen''' & '''Ruhe''' bewahren: nur ein kühler Kopf kann denken -> ruhig '''Distanz''' und den '''Überblick''' gewinnen (was? wo? wer?)
+#'''GELB''' - '''Denken''': Eile mit Weile, da die Zeit drängt (Kurz- und Fehlschlüsse / falscher Aktivismus vermeiden) -> '''Gefahren''' erkennen und beurteilen -> auf Anhieb/schnell richtig/umfassend/überlegte Masssnahmen
+#'''GRÜN''' - '''Handeln''': '''Selbstschutz, Sichern, Alarmieren, Helfen'''
+
+!!Unfall/Gesundheitlich
+#Gefahrenstelle sichern
+#Alarmieren
+#Erste Hilfe leisten
+## A = Atemwege
+## B = Atmung?
+## C = Herzkreislauf?
+## D = Defibrillation
+
+!!Produktionsproblem
+*Überblick verschaffen
+*Alarmieren: Betroffene / Helfende benachrichtigen/aufbieten (wer? wo? was? wieviele? Besonderes?)
+* Situation sichern / Schadensbegrenzung
+*Taskforce einrichten: 
+**Koordinationsstelle -> Tasks sammeln & delegieren (Drehbuch, Feedbackpunkte)
+** Infodrehscheibe(n) -> Infos anfordern & weiterleiten 
+*Ursachen abklären
+*Lösungsvarianten bestimmen und entscheiden (Aufwand, Risiko/Wirkung)
+
