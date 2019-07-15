@@ -40,3 +40,7 @@ def dprint(*args):
 			line = parentStackContext.lineno,\
 			className = className,\
 			functionName=parentStackContext.function) )
+	
+def cdprint(content):
+	"""Print .content of the ContentElement objs. in the specified Content obj."""
+	dprint([contentElement.content for contentElement in content])
