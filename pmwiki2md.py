@@ -36,7 +36,7 @@ class ContentSplitByIndicator(object):
 	def __init__(self, content, indicator):
 		self.indicator = indicator
 		self.before, self.after = content.partition(indicator)[0::2]
-
+		
 class ContentElement(object):
 	
 	ContentElementPartitions = namedtuple("ContentElementPartitions", ["before", "separator", "after"])
@@ -45,6 +45,10 @@ class ContentElement(object):
 		self.content = content
 		self.conversions = conversions
 		self.availableForConversion = availableForConversion
+		
+	@property
+	def isEmpty(self):
+		return self.content == ""
 		
 	def copy(self):
 		"""Return a shallow copy of this object."""
@@ -83,7 +87,6 @@ class ContentElement(object):
 	def rpartition(self, separator):
 		return self.getPartitioned(self.content.rpartition(separator))
 	
-
 class Content(UserList):
 	
 	def __init__(self, initialData=None):
@@ -106,7 +109,11 @@ class Content(UserList):
 			self.data = initialData.data
 		else:
 			self.data = [ContentElement(initialData)]
-	
+			
+	@property
+	def isEmpty(self):
+		return self.content == ""
+			
 	@property
 	def string(self):
 		string = ""
@@ -143,7 +150,7 @@ class Content(UserList):
 		#dprint("my id:\t\t", id(self))
 		#dprint("new id:\t\t", id(new))
 		#dprint("self, self.data, new, class, class: \n", self, "\n", self.data, "\n", new, "\n", Content(), "\n", Content())
-
+		
 		#i = 0
 		for element in self.data:
 			new.append(element)
@@ -157,7 +164,7 @@ class Content(UserList):
 		#dprint("REMOVE ABOVE LINE AND UNCOMMENT LINE BELOW.")
 		#[new.append(element) for element in self.data]
 		return new
-
+	
 class ConvertibleDocument(object):
 	
 	"""Tree of ConvertibleContentElements representing a convertible document."""
@@ -169,12 +176,12 @@ class ConvertibleDocument(object):
 	def convert(self):
 		for conversion in self.conversions:
 			self.content = conversion.convert(self.content)
-
+			
 class Conversion(object):
 	
 	def convert(self, content):
 		pass#OVERRIDE
-
+	
 class ElementByElementConversion(Conversion):
 	
 	def getSubElements(self, element):
@@ -205,15 +212,30 @@ class ElementByElementConversion(Conversion):
 				convertedSubElements = self.convertSubElements(subElements)
 				alteredContent.replaceElement(element, convertedSubElements)
 		return alteredContent
-
+	
 class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 	
 	BEGIN = None #OVERRIDE
 	END = None #OVERRIDE
+	PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS = namedtuple("PartitionedBeginEndDelimitedElement", "beginIndicator element endIndicator")
 	
 	def __init__(self):
 		self.begin = self.__class__.BEGIN
 		self.end = self.__class__.END
+		self.PartitionedBeginEndDelimitedElement = self.__class__.PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS
+		
+	@property
+	def beginAsContentElement(self):
+		"""The BEGIN delimiter initialized as a ContentElement object."""
+		return ContentElement(self.begin, availableForConversion=False)
+	
+	@property
+	def endAsContentElement(self):
+		"""The END delimiter initialized as a ContentElement object."""
+		return ContentElement(self.end, availableForConversion=False)
+		
+	def convertDelimited(self, partitionedElement):
+		return partitionedElement
 		
 	def getSubElements(self, element):
 		
@@ -233,20 +255,20 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		"""
 		
 		subElements = []
-		unprocessedElement = element
+		unprocessed = element
 		
 		while True:
-			#dprint("Unprocessed:", unprocessedElement.content)
 			
 			# Get irrelevant part (partitionedByBegin.before) and relevant part plus
 			# the part we'll process in future iterations (partitionedByBegin.after)
-			partitionedByBegin = unprocessedElement.partition(self.begin)
+			partitionedByBegin = unprocessed.partition(self.begin)
 			#dprint(partitionedByBegin)
 			
 			#dprint("partitionedByBegin:", ",".join([item.content for item in  partitionedByBegin]))
 			
 			# If partitionedByBegin.separator is empty, that means there's nothing left to process.
-			if partitionedByBegin.after.content == "":
+			if partitionedByBegin.after.isEmpty:
+				#subElements+[unprocessed]
 				break
 			
 			# Separate relevant part (our sub element) from future iteration part.
@@ -254,20 +276,29 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 			#dprint("partitionedByEnd:", ",".join([item.content for item in partitionedByEnd]))
 			
 			# Get our spaghettis in a row.
-			elementBeginIndicator = partitionedByBegin.separator
-			subElement = partitionedByEnd.before
-			elementEndIndicator = partitionedByEnd.separator
-			unprocessedElement = partitionedByEnd.after # for future iterations.
-			
+			preceding = partitionedByBegin.before
+			subElement = self.PartitionedBeginEndDelimitedElement(\
+				beginIndicator = self.beginAsContentElement,
+				element = partitionedByEnd.before,
+				endIndicator = self.endAsContentElement,
+			)
+			unprocessed = partitionedByEnd.after # for future iterations.
 			# Add our newly found content elements to the list of elements we'll eventually return.
-			subElements = subElements+[elementBeginIndicator, subElement, elementEndIndicator]
+			if not preceding.isEmpty:
+				# .partition would have returned an empty string if there was nothing
+				# actually preceding our delimited element. Of course, we don't want
+				# that in the result, as elements in the element tree should only
+				# represent actual content, not emptyness.
+				subElements.append(preceding)
+			subElements = subElements+[*self.convertDelimited(subElement)]
+			#cdprint(subElements+[preceding, *self.convertDelimited(subElement)])
 			
 		# If subElements is still an empty list, we haven't found anything to convert.
 		if not subElements:
 			subElements.append(element)
-		
+		cdprint(subElements)
 		return subElements
-
+	
 class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	
 	"""Replaces single occurrences with something else; no context, no frills.
@@ -303,7 +334,7 @@ class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	
 	def convertSubElements(self, subElements):
 		return self.interleaveWithConvertedIndicators(subElements)
-
+	
 class ListConversion(ConversionBySingleCodeReplacement):
 
 	def convert(self, content):
@@ -347,7 +378,7 @@ class ListConversion(ConversionBySingleCodeReplacement):
 				break
 			contentBeforeConversion = convertedContent
 		return convertedContent
-
+	
 class Conversions(UserList):
 	
 	def __init__(self, *conversions):
@@ -363,6 +394,7 @@ class Conversions(UserList):
 # Conversions
 #==========================================================
 
+# Emphasis
 class Pmwiki2MdItalicConversion(ConversionBySingleCodeReplacement):
 	OLD = "''"
 	NEW = "_"
@@ -372,6 +404,48 @@ class Pmwiki2MdBoldConversion(ConversionBySingleCodeReplacement):
 class Pmwiki2MdItalicBoldConversion(ConversionBySingleCodeReplacement):
 	OLD = "'''''"
 	NEW = "**_"
+class Pmwiki2MdUnderscoreBeginConversion(ConversionBySingleCodeReplacement):
+	OLD = "{+"
+	NEW = "''"
+class Pmwiki2MdUnderscoreEndConversion(ConversionBySingleCodeReplacement):
+	OLD = "+}"
+	NEW = "''"
+
+# Strikethrough
+class Pmwiki2MdStrikethroughBeginConversion(ConversionBySingleCodeReplacement):
+	OLD = "{-"
+	NEW = "~~"
+class Pmwiki2MdStrikethroughEndConversion(ConversionBySingleCodeReplacement):
+	OLD = "-}"
+	NEW = "~~"
+
+# Subscript & Superscript
+class Pmwiki2MdSmallSubscriptBeginConversion(ConversionBySingleCodeReplacement):
+	OLD = "[--"
+	NEW = "<sub>"
+class Pmwiki2MdSmallSubscriptEndConversion(ConversionBySingleCodeReplacement):
+	OLD = "--]"
+	NEW = "</sub>"
+class Pmwiki2MdSubscriptBeginConversion(ConversionBySingleCodeReplacement):
+	OLD = "[-"
+	NEW = "<sub>"
+class Pmwiki2MdSubscriptEndConversion(ConversionBySingleCodeReplacement):
+	OLD = "-]"
+	NEW = "</sub>"
+class Pmwiki2MdSuperscriptBeginConversion(ConversionBySingleCodeReplacement):
+	OLD = "[+"
+	NEW = "<sup>"
+class Pmwiki2MdSuperscriptEndConversion(ConversionBySingleCodeReplacement):
+	OLD = "+]"
+	NEW = "</sup>"
+class Pmwiki2MdBigSuperscriptBeginConversion(ConversionBySingleCodeReplacement):
+	OLD = "[++"
+	NEW = "<sup>"
+class Pmwiki2MdBigSuperscriptEndConversion(ConversionBySingleCodeReplacement):
+	OLD = "++]"
+	NEW = "</sup>"
+
+# Titles/Headers
 class Pmwiki2MdTitle1Conversion(ConversionBySingleCodeReplacement):
 	OLD = "\n! "
 	NEW = "\n# "
@@ -382,6 +456,7 @@ class Pmwiki2MdTitle3Conversion(ConversionBySingleCodeReplacement):
 	OLD = "\n!!! "
 	NEW = "\n### "
 
+# Lists
 class Pmwiki2MdBulletListConversion(ListConversion):
 	OLD = "*"
 	NEW = "-"
