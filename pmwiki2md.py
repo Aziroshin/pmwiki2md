@@ -124,6 +124,10 @@ class Content(UserList):
 				string = string+item.content
 		return string
 	
+	@property
+	def lines(self):
+		return self.string.split("\n")
+	
 	def getElementIndex(self, element):
 		
 		"""Returns the index of the specified ContentElement object."""
@@ -234,24 +238,36 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		"""The END delimiter initialized as a ContentElement object."""
 		return ContentElement(self.end, availableForConversion=False)
 		
-	def convertDelimited(self, partitionedElement):
+	def convertDelimited(self, partitionedElement):#OVERRIDE
+		"""Converts the specified self.PartitionedBeginEndDelimitedElement.
+		Meant to be subclassed; Returns unaltered input by default.
+		
+		In most cases, this will probably be used for simple replacements
+		of the begin and end delimiters."""
+		
 		return partitionedElement
 		
 	def getSubElements(self, element):
 		
 		"""Get a list of new (sub) content elements for any .begin/.end delimited portions found in the specified element.
 		
-		Inspects the specified content element's content for any sub-strings that start and start
+		Inspects the specified content element's content for any sub-strings that start
 		with .begin and end with .end, then gets copies of the original element, but with the strings
 		of the so identified elements, and adds them to a list in order.
 		As the begin and end identifiers also get their own content element, in practice, that means
 		that every successfully identified sub-string results in three content elements.
 		
+		Internally, as far as this and any method related to further processing of this three-pieced
+		element representation are concerned, the such partitioned element is represented as
+		a namedtuple of the type referenced by self.PartitionedBeginEndDelimitedElement, and defined in
+		the class attribute PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS.
+		
 		Example: The return value for one content element representing the string "[[a]] [[b]]", with "[[" being
 		.begin and "]]" .end, would be a list of 6 content element objects, representing the following 6 strings:
 		["[[", "a", "]]", "[[", "b", "]]"]
 		Note: We return a list of content element objects, not strings, so the above list isn't literally
-		resembling an actual return value.
+		resembling an actual return value. In practice, every one of these strings would be 
+		ContentElement objects referencing their string by the appropriate attribute.
 		"""
 		
 		subElements = []
@@ -262,18 +278,15 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 			# Get irrelevant part (partitionedByBegin.before) and relevant part plus
 			# the part we'll process in future iterations (partitionedByBegin.after)
 			partitionedByBegin = unprocessed.partition(self.begin)
-			#dprint(partitionedByBegin)
 			
-			#dprint("partitionedByBegin:", ",".join([item.content for item in  partitionedByBegin]))
-			
-			# If partitionedByBegin.separator is empty, that means there's nothing left to process.
+			# Are we done?
+			# If partitionedByBegin.after is empty, that means there's nothing left to process.
 			if partitionedByBegin.after.isEmpty:
-				#subElements+[unprocessed]
+				subElements.append(unprocessed)
 				break
 			
 			# Separate relevant part (our sub element) from future iteration part.
 			partitionedByEnd = partitionedByBegin.after.partition(self.end)
-			#dprint("partitionedByEnd:", ",".join([item.content for item in partitionedByEnd]))
 			
 			# Get our spaghettis in a row.
 			preceding = partitionedByBegin.before
@@ -289,16 +302,35 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 				# actually preceding our delimited element. Of course, we don't want
 				# that in the result, as elements in the element tree should only
 				# represent actual content, not emptyness.
+				# That's why preceding only enters the element tree when not empty.
 				subElements.append(preceding)
 			subElements = subElements+[*self.convertDelimited(subElement)]
-			#cdprint(subElements+[preceding, *self.convertDelimited(subElement)])
 			
 		# If subElements is still an empty list, we haven't found anything to convert.
 		if not subElements:
 			subElements.append(element)
-		cdprint(subElements)
 		return subElements
 	
+class ConversionOfBeginEndDelimitedToOtherDelimiters(ConversionOfBeginEndDelimitedToSomething):
+	
+	TO_BEGIN = None
+	TO_END = None
+	
+	@property
+	def to_begin(self):
+		return self.__class__.TO_BEGIN
+	
+	@property
+	def to_end(self):
+		return self.__class__.TO_END
+	
+	def convertDelimited(self, partitionedElement):
+		return self.PartitionedBeginEndDelimitedElement(\
+			beginIndicator = ContentElement(self.to_begin, availableForConversion=False),\
+			element = partitionedElement.element,\
+			endIndicator = ContentElement(self.to_end, availableForConversion=False)
+			)
+		
 class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	
 	"""Replaces single occurrences with something else; no context, no frills.
@@ -335,8 +367,32 @@ class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	def convertSubElements(self, subElements):
 		return self.interleaveWithConvertedIndicators(subElements)
 	
-class ListConversion(ConversionBySingleCodeReplacement):
-
+class ConversionByIterativeSingleCodeReplacementAtBeginOfLine(ConversionBySingleCodeReplacement):
+	
+		def oldByLevel(self, level):
+			return self.__class__.OLD*level
+		
+		def newByLevel(self, level):
+			return self.__class__.NEW*level
+		
+		def highestLevel(self, content):
+			"""Returns the highest count of OLD indicators found in all line beginnings throughout the content."""
+			maxContentLevel = 1
+			for line in content.lines:
+				maxLineLevel = 0
+				if len(line) > 0:
+					previousChar = self.old
+					for char in line:
+						if not char == previousChar:
+							break
+						maxLineLevel += 1
+						previousChar = char
+				if maxLineLevel > maxContentLevel:
+					maxContentLevel = maxLineLevel
+			return maxContentLevel
+	
+class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
+	
 	def convert(self, content):
 		
 		"""Convert nested lists from PmWiki to Markdown.
@@ -350,34 +406,44 @@ class ListConversion(ConversionBySingleCodeReplacement):
 		# assembles the actual, final indicators that will be used
 		# for conversion by the base class.
 		
-		# Indent the markdown list indicator by two spaces per list level.
-		level = 1
+		# 'old' and 'new' as originally specified when the conversion rules were defined
+		# (e.g. as OLD and NEW class attributes). These will then get added up as the conversion
+		# code descends into deeper nested list levels (e.g. "*" becomes "***" on the third level
+		# of nesting).
+		
 		contentBeforeConversion = content
-		while True:
-			indentedNew = "".join(["  " for level in range(0, level)]+[self.new])
-			theNewOld = os.linesep+self.old+" "
-			theNewNew = os.linesep+indentedNew+" "
-			
+		convertedContent = None
+		
+		for level in range(1, self.highestLevel(content)):
 			# We spoof what we need to for our parent class to be none the wiser.
-			self.old = theNewOld
-			self.new = theNewNew
+			self.old = os.linesep+self.oldByLevel(level)+" "
+			self.new = os.linesep+"  "*level+self.newByLevel(1)+" "
 			
 			# Our parent class can take over.
-			#dprint("content before super()", convertedContent)
-			#dprint("Content class comparison before super(): ", Content(), Content())
+			print("\n")
+			print("================ BEGIN ================")
+			dprint("\n", "theNewOld: "+self.old.replace(" ", "S")+"\ntheNewNew: "+self.new.replace(" ", "S"))
+			print("contentBeforeConversion:")
+			cdprint(contentBeforeConversion)
 			convertedContent = super().convert(contentBeforeConversion)
-			#dprint("content after super()", convertedContent)
-			#dprint("Content class comparison after super(): ", Content(), Content())
-			#cdprint(contentBeforeConversion)
-			#cdprint(convertedContent)
+			print("convertedContent:")
+			cdprint(convertedContent)
+			print("================ END ================")
+			print("\n")
+			
 			# There might be a better way to determine that
 			# there are no lists of any greater levels anymore.
 			# Right now, we're just looking at whether there
 			# was anything to convert during the last pass.
-			if len(convertedContent) == len(contentBeforeConversion):
-				break
-			contentBeforeConversion = convertedContent
-		return convertedContent
+			if not len(convertedContent) == len(contentBeforeConversion):
+				contentBeforeConversion = convertedContent
+			level += 1
+			dprint("level", level)
+		
+		if not convertedContent == None:
+			return convertedContent
+		else:
+			return contentBeforeConversion
 	
 class Conversions(UserList):
 	
@@ -419,29 +485,29 @@ class Pmwiki2MdStrikethroughEndConversion(ConversionBySingleCodeReplacement):
 	OLD = "-}"
 	NEW = "~~"
 
-# Subscript & Superscript
-class Pmwiki2MdSmallSubscriptBeginConversion(ConversionBySingleCodeReplacement):
+# Small & Big
+class Pmwiki2MdSmallSmallBeginConversion(ConversionBySingleCodeReplacement):
 	OLD = "[--"
 	NEW = "<sub>"
-class Pmwiki2MdSmallSubscriptEndConversion(ConversionBySingleCodeReplacement):
+class Pmwiki2MdSmallSmallEndConversion(ConversionBySingleCodeReplacement):
 	OLD = "--]"
 	NEW = "</sub>"
-class Pmwiki2MdSubscriptBeginConversion(ConversionBySingleCodeReplacement):
+class Pmwiki2MdSmallBeginConversion(ConversionBySingleCodeReplacement):
 	OLD = "[-"
 	NEW = "<sub>"
-class Pmwiki2MdSubscriptEndConversion(ConversionBySingleCodeReplacement):
+class Pmwiki2MdSmallEndConversion(ConversionBySingleCodeReplacement):
 	OLD = "-]"
 	NEW = "</sub>"
-class Pmwiki2MdSuperscriptBeginConversion(ConversionBySingleCodeReplacement):
+class Pmwiki2MdBigBeginConversion(ConversionBySingleCodeReplacement):
 	OLD = "[+"
 	NEW = "<sup>"
-class Pmwiki2MdSuperscriptEndConversion(ConversionBySingleCodeReplacement):
+class Pmwiki2MdBigEndConversion(ConversionBySingleCodeReplacement):
 	OLD = "+]"
 	NEW = "</sup>"
-class Pmwiki2MdBigSuperscriptBeginConversion(ConversionBySingleCodeReplacement):
+class Pmwiki2MdBigBigBeginConversion(ConversionBySingleCodeReplacement):
 	OLD = "[++"
 	NEW = "<sup>"
-class Pmwiki2MdBigSuperscriptEndConversion(ConversionBySingleCodeReplacement):
+class Pmwiki2MdBigBigEndConversion(ConversionBySingleCodeReplacement):
 	OLD = "++]"
 	NEW = "</sup>"
 
@@ -455,6 +521,18 @@ class Pmwiki2MdTitle2Conversion(ConversionBySingleCodeReplacement):
 class Pmwiki2MdTitle3Conversion(ConversionBySingleCodeReplacement):
 	OLD = "\n!!! "
 	NEW = "\n### "
+
+# Sub and Superscript
+class Pmwiki2MdSubscriptConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
+	BEGIN = "'_"
+	END = "_'"
+	TO_BEGIN = "<sub>"
+	TO_END = "</sub>"
+class Pmwiki2MdSuperscriptConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
+	BEGIN = "'^"
+	END = "^'"
+	TO_BEGIN = "<sup>"
+	TO_END = "</sup>"
 
 # Lists
 class Pmwiki2MdBulletListConversion(ListConversion):

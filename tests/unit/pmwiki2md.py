@@ -55,32 +55,32 @@ class ConversionTests(unittest.TestCase):
 		conversions = Conversions(Pmwiki2MdStrikethroughBeginConversion, Pmwiki2MdStrikethroughEndConversion)
 		self.compareMultiConverted(original, shouldLookLike, conversions)
 		
-	def test_Pmwiki2MdSmallSubscriptConversion(self):
-		from pmwiki2md import Conversions, Pmwiki2MdSmallSubscriptBeginConversion, Pmwiki2MdSmallSubscriptEndConversion
+	def test_Pmwiki2MdSmallSmallConversion(self):
+		from pmwiki2md import Conversions, Pmwiki2MdSmallSmallBeginConversion, Pmwiki2MdSmallSmallEndConversion
 		original = Content("Cucumbers [--might--] be tomatoes.")
 		shouldLookLike = ["Cucumbers ", "<sub>", "might", "</sub>", " be tomatoes."]
-		conversions = Conversions(Pmwiki2MdSmallSubscriptBeginConversion, Pmwiki2MdSmallSubscriptEndConversion)
+		conversions = Conversions(Pmwiki2MdSmallSmallBeginConversion, Pmwiki2MdSmallSmallEndConversion)
 		self.compareMultiConverted(original, shouldLookLike, conversions)
 	
-	def test_Pmwiki2MdSubscriptConversion(self):
-		from pmwiki2md import Conversions, Pmwiki2MdSubscriptBeginConversion, Pmwiki2MdSubscriptEndConversion
+	def test_Pmwiki2MdSmallConversion(self):
+		from pmwiki2md import Conversions, Pmwiki2MdSmallBeginConversion, Pmwiki2MdSmallEndConversion
 		original = Content("Cucumbers [-might-] be tomatoes.")
 		shouldLookLike = ["Cucumbers ", "<sub>", "might", "</sub>", " be tomatoes."]
-		conversions = Conversions(Pmwiki2MdSubscriptBeginConversion, Pmwiki2MdSubscriptEndConversion)
+		conversions = Conversions(Pmwiki2MdSmallBeginConversion, Pmwiki2MdSmallEndConversion)
 		self.compareMultiConverted(original, shouldLookLike, conversions)
 		
-	def test_Pmwiki2MdSuperscriptConversion(self):
-		from pmwiki2md import Conversions, Pmwiki2MdSuperscriptBeginConversion, Pmwiki2MdSuperscriptEndConversion
+	def test_Pmwiki2MdBigConversion(self):
+		from pmwiki2md import Conversions, Pmwiki2MdBigBeginConversion, Pmwiki2MdBigEndConversion
 		original = Content("Cucumbers [+might+] be tomatoes.")
 		shouldLookLike = ["Cucumbers ", "<sup>", "might", "</sup>", " be tomatoes."]
-		conversions = Conversions(Pmwiki2MdSuperscriptBeginConversion, Pmwiki2MdSuperscriptEndConversion)
+		conversions = Conversions(Pmwiki2MdBigBeginConversion, Pmwiki2MdBigEndConversion)
 		self.compareMultiConverted(original, shouldLookLike, conversions)
 		
-	def test_Pmwiki2MdBigSuperscriptsConversion(self):
-		from pmwiki2md import Conversions, Pmwiki2MdBigSuperscriptBeginConversion, Pmwiki2MdBigSuperscriptEndConversion
+	def test_Pmwiki2MdBigBigsConversion(self):
+		from pmwiki2md import Conversions, Pmwiki2MdBigBigBeginConversion, Pmwiki2MdBigBigEndConversion
 		original = Content("Cucumbers [++might++] be tomatoes.")
 		shouldLookLike = ["Cucumbers ", "<sup>", "might", "</sup>", " be tomatoes."]
-		conversions = Conversions(Pmwiki2MdBigSuperscriptBeginConversion, Pmwiki2MdBigSuperscriptEndConversion)
+		conversions = Conversions(Pmwiki2MdBigBigBeginConversion, Pmwiki2MdBigBigEndConversion)
 		self.compareMultiConverted(original, shouldLookLike, conversions)
 		
 	def test_Pmwiki2MdItalicBoldConversion(self):
@@ -95,9 +95,33 @@ class ConversionTests(unittest.TestCase):
 		shouldLookLike = ["", "\n# ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
+	def test_Pmwiki2MdSubscriptConversion(self):
+		from pmwiki2md import Pmwiki2MdSubscriptConversion as Conversion
+		original = Content("Cucumbers '_might_' be tomatoes.")
+		shouldLookLike = ["Cucumbers ", "<sub>", "might", "</sub>", " be tomatoes."]
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
+	def test_Pmwiki2MdSuperscriptConversion(self):
+		from pmwiki2md import Pmwiki2MdSuperscriptConversion as Conversion
+		original = Content("Cucumbers '^might^' be tomatoes.")
+		shouldLookLike = ["Cucumbers ", "<sup>", "might", "</sup>", " be tomatoes."]
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
 	def test_Pmwiki2Md1LevelBulletListConversion(self):
 		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
 		original = Content("\n* Cucumbers might be tomatoes.")
+		shouldLookLike = ["", "\n  - ", "Cucumbers might be tomatoes."]
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
+	def test_Pmwiki2Md2LevelBulletListConversion(self):
+		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
+		original = Content("\n** Cucumbers might be tomatoes.")
+		shouldLookLike = ["", "\n  - ", "Cucumbers might be tomatoes."]
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
+	def test_Pmwiki2Md3LevelBulletListConversion(self):
+		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
+		original = Content("\n*** Cucumbers might be tomatoes.")
 		shouldLookLike = ["", "\n  - ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
@@ -113,6 +137,17 @@ class ConversionTests(unittest.TestCase):
 		original = Content("[[a]] [[b]]")
 		shouldLookLike = ["[[", "a", "]]", " ", "[[", "b", "]]"]
 		self.compareConverted(original, shouldLookLike, Conversion)
+		
+	def test_ConversionByIterativeSingleCodeReplacementAtBeginOfLine_highestLevel(self):
+		from pmwiki2md import ConversionByIterativeSingleCodeReplacementAtBeginOfLine
+		class __Test(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
+			OLD = "*"
+			NEW = "-"
+		toBeCounted = Content("\n*X\n**XXXX\n*\n*******XXX\n**XXXXXXXX\n****XX")
+		countShouldBe = 7
+		count = __Test().highestLevel(toBeCounted)
+		self.assertEqual(count, countShouldBe)
+		
 		
 	def test_ContentCopy(self):
 		from pmwiki2md import Content
