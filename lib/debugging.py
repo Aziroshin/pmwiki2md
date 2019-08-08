@@ -12,13 +12,14 @@ import os
 # Library
 #=======================================================================================
 
-def dprint(*args):
+def dprint(*args, stackLevel=1):
 	
 	#=============================
 	"""Print a debugging message with automagically added context information."""
 	#=============================
 
-	parentStackContext = inspect.stack()[1]
+	parentStackContext = inspect.stack()[stackLevel]
+	
 	contextLocals = parentStackContext[0].f_locals
 	className = ""
 	
@@ -43,4 +44,4 @@ def dprint(*args):
 	
 def cdprint(content):
 	"""Print .content of the ContentElement objs. in the specified Content obj."""
-	dprint([contentElement.content for contentElement in content])
+	dprint([contentElement.content for contentElement in content], stackLevel=2)
