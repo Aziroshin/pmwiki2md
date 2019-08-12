@@ -116,13 +116,13 @@ class ConversionTests(unittest.TestCase):
 	def test_Pmwiki2Md2LevelBulletListConversion(self):
 		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
 		original = Content("\n** Cucumbers might be tomatoes.")
-		shouldLookLike = ["", "\n  - ", "Cucumbers might be tomatoes."]
+		shouldLookLike = ["", "\n    - ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
 	def test_Pmwiki2Md3LevelBulletListConversion(self):
 		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
 		original = Content("\n*** Cucumbers might be tomatoes.")
-		shouldLookLike = ["", "\n  - ", "Cucumbers might be tomatoes."]
+		shouldLookLike = ["", "\n      - ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
 	def test_ConversionOfBeginEndDelimitedToSomething(self):

@@ -414,7 +414,7 @@ class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 		contentBeforeConversion = content
 		convertedContent = None
 		
-		for level in range(1, self.highestLevel(content)):
+		for level in range(1, self.highestLevel(content)+1):
 			# We spoof what we need to for our parent class to be none the wiser.
 			self.old = os.linesep+self.oldByLevel(level)+" "
 			self.new = os.linesep+"  "*level+self.newByLevel(1)+" "
@@ -423,10 +423,11 @@ class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 			print("\n")
 			print("================ BEGIN ================")
 			dprint("\n", "theNewOld: "+self.old.replace(" ", "S")+"\ntheNewNew: "+self.new.replace(" ", "S"))
-			print("contentBeforeConversion:")
+			dprint("level", level)
+			dprint("contentBeforeConversion:")
 			cdprint(contentBeforeConversion)
 			convertedContent = super().convert(contentBeforeConversion)
-			print("convertedContent:")
+			dprint("convertedContent:")
 			cdprint(convertedContent)
 			print("================ END ================")
 			print("\n")
@@ -438,7 +439,6 @@ class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 			if not len(convertedContent) == len(contentBeforeConversion):
 				contentBeforeConversion = convertedContent
 			level += 1
-			dprint("level", level)
 		
 		if not convertedContent == None:
 			return convertedContent
