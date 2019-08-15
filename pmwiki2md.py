@@ -184,7 +184,7 @@ class ConvertibleDocument(object):
 class Conversion(object):
 	
 	def convert(self, content):
-		pass#OVERRIDE
+		return content#OVERRIDE
 	
 class ElementByElementConversion(Conversion):
 	
@@ -444,7 +444,7 @@ class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 			return convertedContent
 		else:
 			return contentBeforeConversion
-	
+		
 class Conversions(UserList):
 	
 	def __init__(self, *conversions):
@@ -538,6 +538,9 @@ class Pmwiki2MdSuperscriptConversion(ConversionOfBeginEndDelimitedToOtherDelimit
 class Pmwiki2MdBulletListConversion(ListConversion):
 	OLD = "*"
 	NEW = "-"
+class Pmwiki2MdNumberedListConversion(ListConversion):
+	OLD = "#"
+	NEW = "1."
 
 #class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
 	#OLD = "*"
@@ -582,16 +585,37 @@ class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	NEW = "\n\n"
 
 class Pmwiki2MdCodeBlockConversion(Conversion):
-	def convert(self):
-		pass#TODO
+	pass
 
 class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToSomething):
-	def convert(self, content):
-		pass
+	pass
 
 class AllConversions(Conversions):
 	def __init__(self):
 		self.data = [\
 			Pmwiki2MdBoldConversion,\
-			Pmwiki2MdItalicConversion
+			Pmwiki2MdItalicConversion,\
+			Pmwiki2MdItalicBoldConversion,\
+			Pmwiki2MdUnderscoreBeginConversion,\
+			Pmwiki2MdUnderscoreEndConversion,\
+			Pmwiki2MdStrikethroughBeginConversion,\
+			Pmwiki2MdStrikethroughEndConversion,\
+			Pmwiki2MdSmallSmallBeginConversion,\
+			Pmwiki2MdSmallSmallEndConversion,\
+			Pmwiki2MdSmallBeginConversion,\
+			Pmwiki2MdSmallEndConversion,\
+			Pmwiki2MdBigBeginConversion,\
+			Pmwiki2MdBigEndConversion,\
+			Pmwiki2MdBigBigBeginConversion,\
+			Pmwiki2MdBigBigEndConversion,\
+			Pmwiki2MdTitle1Conversion,\
+			Pmwiki2MdTitle2Conversion,\
+			Pmwiki2MdTitle3Conversion,\
+			Pmwiki2MdSubscriptConversion,\
+			Pmwiki2MdSuperscriptConversion,\
+			Pmwiki2MdBulletListConversion,\
+			Pmwiki2MdNumberedListConversion,\
+			#Pmwiki2MdDoubleNewlineConversion,\
+			#Pmwiki2MdCodeBlockConversion,\
+			#Pmwiki2MdLinkConversion,\
 			]
