@@ -390,7 +390,7 @@ class ConversionByIterativeSingleCodeReplacementAtBeginOfLine(ConversionBySingle
 				if maxLineLevel > maxContentLevel:
 					maxContentLevel = maxLineLevel
 			return maxContentLevel
-	
+
 class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 	
 	def convert(self, content):
@@ -541,6 +541,11 @@ class Pmwiki2MdBulletListConversion(ListConversion):
 class Pmwiki2MdNumberedListConversion(ListConversion):
 	OLD = "#"
 	NEW = "1."
+
+class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToSomething):
+	
+	def convertDelimited(self, partitionedElement):
+		
 
 #class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
 	#OLD = "*"
