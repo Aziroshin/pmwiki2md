@@ -138,6 +138,12 @@ class ConversionTests(unittest.TestCase):
 		shouldLookLike = ["[[", "a", "]]", " ", "[[", "b", "]]"]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
+	def test_Pmwiki2MdNamelessLinkPointyBracketsConversion(self):
+		from pmwiki2md import Pmwiki2MdLinkConversion as Conversion
+		original = Content("[[http://example.com]]")
+		shouldLookLike = ["<", "http://example.com", ">"]
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
 	def test_ConversionByIterativeSingleCodeReplacementAtBeginOfLine_highestLevel(self):
 		from pmwiki2md import ConversionByIterativeSingleCodeReplacementAtBeginOfLine
 		class __Test(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):

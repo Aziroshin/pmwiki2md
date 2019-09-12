@@ -6,18 +6,13 @@
 #=======================================================================================
 
 # Python
-from collections import UserList, namedtuple
+from collections import UserList
+from typing import NamedTuple
 import copy, os
 
 # Debugging
 import time
 from lib.debugging import dprint, cdprint
-
-#=======================================================================================
-# Named Tuples
-#=======================================================================================
-
-FoundConversionIndicator = namedtuple("FoundConversionIndicator", ["index", "conversion"])
 
 #=======================================================================================
 # Library
@@ -39,7 +34,8 @@ class ContentSplitByIndicator(object):
 		
 class ContentElement(object):
 	
-	ContentElementPartitions = namedtuple("ContentElementPartitions", ["before", "separator", "after"])
+	ContentElementPartitions = NamedTuple("ContentElementPartitions",\
+		[("before", object), ("separator", object), ("after", object)])
 	
 	def __init__(self, content, conversions=[], availableForConversion=True):
 		self.content = content
@@ -64,7 +60,7 @@ class ContentElement(object):
 		
 		"""Take a .partition result 3-tuple and return self.__class__ objects for each string.
 		Returns:
-		  - self.__class__.ContentElementPartitions 3-namedtuple, with each attribute holding
+		  - self.__class__.ContentElementPartitions 3-NamedTuple, with each attribute holding
 		  a self.__class__ object with the corresponding .partition result string:
 		    [0]: before
 			[1]: separator
@@ -221,7 +217,7 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 	
 	BEGIN = None #OVERRIDE
 	END = None #OVERRIDE
-	PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS = namedtuple("PartitionedBeginEndDelimitedElement", "beginIndicator element endIndicator")
+	PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS = NamedTuple("PartitionedBeginEndDelimitedElement", [("beginIndicator", object), ("element", object), ("endIndicator", object)])
 	
 	def __init__(self):
 		self.begin = self.__class__.BEGIN
@@ -259,7 +255,7 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		
 		Internally, as far as this and any method related to further processing of this three-pieced
 		element representation are concerned, the such partitioned element is represented as
-		a namedtuple of the type referenced by self.PartitionedBeginEndDelimitedElement, and defined in
+		a NamedTuple of the type referenced by self.PartitionedBeginEndDelimitedElement, and defined in
 		the class attribute PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS.
 		
 		Example: The return value for one content element representing the string "[[a]] [[b]]", with "[[" being
@@ -277,6 +273,7 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 			
 			# Get irrelevant part (partitionedByBegin.before) and relevant part plus
 			# the part we'll process in future iterations (partitionedByBegin.after)
+			#dprint(self.begin)
 			partitionedByBegin = unprocessed.partition(self.begin)
 			
 			# Are we done?
@@ -420,17 +417,17 @@ class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 			self.new = os.linesep+"  "*level+self.newByLevel(1)+" "
 			
 			# Our parent class can take over.
-			print("\n")
-			print("================ BEGIN ================")
-			dprint("\n", "theNewOld: "+self.old.replace(" ", "S")+"\ntheNewNew: "+self.new.replace(" ", "S"))
-			dprint("level", level)
-			dprint("contentBeforeConversion:")
-			cdprint(contentBeforeConversion)
+			#print("\n")
+			#print("================ BEGIN ================")
+			#dprint("\n", "theNewOld: "+self.old.replace(" ", "S")+"\ntheNewNew: "+self.new.replace(" ", "S"))
+			#dprint("level", level)
+			#dprint("contentBeforeConversion:")
+			#cdprint(contentBeforeConversion)
 			convertedContent = super().convert(contentBeforeConversion)
-			dprint("convertedContent:")
-			cdprint(convertedContent)
-			print("================ END ================")
-			print("\n")
+			#dprint("convertedContent:")
+			#cdprint(convertedContent)
+			#print("================ END ================")
+			#print("\n")
 			
 			# There might be a better way to determine that
 			# there are no lists of any greater levels anymore.
@@ -542,11 +539,70 @@ class Pmwiki2MdNumberedListConversion(ListConversion):
 	OLD = "#"
 	NEW = "1."
 
-class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToSomething):
+# Links
+class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
+	BEGIN = "[["
+	END = "]]"
+	
+	# For nameless links.
+	TO_BEGIN = "<"
+	TO_END = ">"
+	
+	TO_NAMED_LINK_TEMPLATE = "[${address}](${name})"
+	
+	class PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS(NamedTuple):
+		beginIndicator: object
+		element: object
+		endIndicator: object
+		
+		@property
+		def name(self):
+			return self.addressAndName[1]
+		
+		@property
+		def address(self):
+			return self.addressAndName[0]
+		
+		@property
+		def isNameless(self):
+			return self.name == ""
+		
+		@property
+		def addressAndName(self):
+			"""Returns a tuple with the link address first and the name second.
+			This is meant to be overriden in order to customize link processing."""
+			
+			# Directly returning [0::2] would make it so the address and name
+			# doesn't have fixed positions, depending on whether there was
+			# a name in the original formatting or not, so we hardcore the
+			# positions.
+			partitionedLink = self.element.content.rpartition(" | ")
+			if partitionedLink[0]:
+				return partitionedLink[0::2]
+			else:
+				return (partitionedLink[2], "")
+	
+	@property
+	def to_namedLinkTemplate(self):
+		return self.__class__.NAMED_LINK_TEMPLATE
 	
 	def convertDelimited(self, partitionedElement):
+		dprint(partitionedElement.address)
+		if partitionedElement.isNameless:
+			linkText = partitionedElement.address
+		else:
+			linkText = self.to_namedLinkTemplate.format(\
+				address = self.partitionedElement.address,\
+				name = self.partitionedElement.name)
+		alteredPartitionedElement = self.PartitionedBeginEndDelimitedElement(\
+				beginIndicator = ContentElement(self.to_begin, availableForConversion=False),
+				# TODO: Link names must be available for conversion.
+				element = ContentElement(linkText, availableForConversion=False),\
+				endIndicator = ContentElement(self.to_end, availableForConversion=False)
+			)
+		dprint(alteredPartitionedElement.address)
+		return alteredPartitionedElement
 		
-
 #class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
 	#OLD = "*"
 	#NEW = "-"
@@ -590,9 +646,6 @@ class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	NEW = "\n\n"
 
 class Pmwiki2MdCodeBlockConversion(Conversion):
-	pass
-
-class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToSomething):
 	pass
 
 class AllConversions(Conversions):
