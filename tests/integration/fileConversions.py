@@ -9,6 +9,7 @@ import unittest
 
 # DEBUG
 from lib.debugging import dprint, cdprint
+from pathlib import Path
 import time, os
 
 #=======================================================================================
@@ -26,6 +27,13 @@ class TestFilePair(object):
 		self._md = None
 		
 	@property
+	def mdFileName(self):
+		return Path(self.mdFilePath).name
+		
+	def pmwikiFileName(self):
+		return Path(self.pmwikiFilePath).name
+		
+	@property
 	def pmwiki(self):
 		if self._pmwiki is None:
 			with open(self.pmwikiFilePath, "r") as pmwikiFile:
@@ -38,10 +46,6 @@ class TestFilePair(object):
 			with open(self.mdFilePath, "r") as mdFile:
 				self._md = mdFile.read()
 		return self._md
-	
-	@property
-	def convert(self):
-		from pmwiki2md import Conversions
 		
 class FileConversions(unittest.TestCase):
 	
@@ -50,8 +54,15 @@ class FileConversions(unittest.TestCase):
 		self.maxDiff = None
 	
 	@property
+	def convertedFilesBaseDir(self):
+		return os.path.join(os.path.dirname(__file__), "convertedFiles")
+	
+	@property
+	def mdConvertedFilesBaseDir(self):
+		return os.path.join(self.convertedFilesBaseDir, "md")
+	
+	@property
 	def conversionsBaseDir(self):
-		#return os.listdir(os.path.dirname(__file__))
 		return os.path.join(os.path.dirname(__file__), "conversionFiles")
 	
 	@property
@@ -85,6 +96,9 @@ class FileConversions(unittest.TestCase):
 		else:
 			raise IncompleteConversionPair("Markdown counterpart for pmwiki file not found: "+pmwikiFilePath)
 		
+	def getMdConvertedFilePathFromMdFileName(self, mdFileName):
+		return os.path.join(self.mdConvertedFilesBaseDir, mdFileName)
+		
 	def setUp(self):
 		self.filePairs = {}
 		for pmwikiFilePath in self.pmwikiConversionFilePaths:
@@ -95,6 +109,16 @@ class FileConversions(unittest.TestCase):
 					pmwikiFilePath,\
 					self.getMatchingMdFilePathForPmwikiFilePath(pmwikiFilePath)))
 				
+	def logConverted(self, converted, testFilePair):
+		with open(self.getMdConvertedFilePathFromMdFileName(testFilePair.mdFileName), "w") as convertedFile:
+			convertedFile.write(converted)
+		
+	def convertAndCompare(self, conversions, content, testFilePair):
+		converted = conversions.convert(content)
+		dprint("LALA")
+		self.logConverted(converted.string, testFilePair)
+		return self.assertEqual(converted.string, testFilePair.md)
+				
 	def _runOneFileTest(self, filePair):
 		from pmwiki2md import AllConversions as Conversions, Content as Content
 		conversions = Conversions()
@@ -102,13 +126,14 @@ class FileConversions(unittest.TestCase):
 		mdFilePath = self.getMatchingMdFilePathForPmwikiFilePath(pmwikiFilePath)
 		testFilePair = TestFilePair(pmwikiFilePath, mdFilePath)
 		dprint("testFilePair", testFilePair.pmwikiFilePath, testFilePair.mdFilePath)
-		self.assertEqual(conversions.convert(Content(testFilePair.pmwiki)).string, testFilePair.md)
+		return self.assertEqual(conversions.convert(Content(testFilePair.pmwiki)).string, testFilePair.md)
 		
 	def runOneFileTest(self, pmwikiFileTestName):
 		from pmwiki2md import AllConversions as Conversions, Content as Content
-		conversions = Conversions()
 		testFilePair = self.filePairs[pmwikiFileTestName]
-		self.assertEqual(conversions.convert(Content(testFilePair.pmwiki)).string, testFilePair.md)
+		conversions = Conversions()
+		content = Content(testFilePair.pmwiki)
+		return self.convertAndCompare(conversions, content, testFilePair)
 		
 	def test_test(self):
 		self.runOneFileTest("testTest")
