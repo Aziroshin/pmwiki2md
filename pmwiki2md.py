@@ -142,27 +142,9 @@ class Content(UserList):
 		for replacementElement in reversed(replacementElements):
 			self.insert(index, replacementElement)
 	def copy(self):
-		#dprint("will see initial data messages:")
 		new = self.__class__()
-		#dprint("End of initial data messages.")
-		#dprint("my data id:\t\t", id(self.data))
-		#dprint("new data id:\t\t", id(new.data))
-		#dprint("my id:\t\t", id(self))
-		#dprint("new id:\t\t", id(new))
-		#dprint("self, self.data, new, class, class: \n", self, "\n", self.data, "\n", new, "\n", Content(), "\n", Content())
-		
-		#i = 0
 		for element in self.data:
 			new.append(element)
-			#print(self.data)
-			#i += 1
-			#if i == 10:
-			#	#raise Exception("INFINITE LOOP")
-			#	time.sleep(100000000)
-		
-		#[dprint("Copying forever?"+str(new.append(element))) for element in self.data]
-		#dprint("REMOVE ABOVE LINE AND UNCOMMENT LINE BELOW.")
-		#[new.append(element) for element in self.data]
 		return new
 	
 class ConvertibleDocument(object):
@@ -343,19 +325,23 @@ class ConversionBySingleCodeReplacement(ElementByElementConversion):
 		self.new = self.__class__.NEW
 	
 	def interleaveWithConvertedIndicators(self, subElements):
+		
 		"""Interleaves the list of content elements with ones representing NEW.
 		This is based on the assumption that said list came to be by splitting
 		a content element by OLD.
 		Assumption example: """
+		
 		convertedSubElements = []
 		for subElement in subElements:
 			convertedSubElements.append(subElement)
 			convertedSubElements.append(ContentElement(self.new, availableForConversion=False))
+		
 		# To simulate proper "".join() behaviour, cut off the excess we've likely added.
 		# In case the content element in question ended with a formatting indicator, however,
 		# the last sub element will be '', as a result of the the behaviour of "".split.
 		if convertedSubElements[-1].content == self.new:
 			convertedSubElements.pop()
+		
 		return convertedSubElements
 	
 	def getSubElements(self, element):
@@ -411,23 +397,17 @@ class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 		contentBeforeConversion = content
 		convertedContent = None
 		
-		for level in range(1, self.highestLevel(content)+1):
+		# We set -1 as the range's step value to go from the highest level to the lowest.
+		# This we do so, for example, "***" get's replaced before a lower level replacement
+		# iteration has a chance of replacing "*" of "***", turning it into "**".
+		for level in range(self.highestLevel(content)+1, 0, -1):
 			# We spoof what we need to for our parent class to be none the wiser.
-			self.old = os.linesep+self.oldByLevel(level)+" "
+			self.old = os.linesep+self.oldByLevel(level)#+" "
 			self.new = os.linesep+"  "*level+self.newByLevel(1)+" "
 			
 			# Our parent class can take over.
-			#print("\n")
-			#print("================ BEGIN ================")
-			#dprint("\n", "theNewOld: "+self.old.replace(" ", "S")+"\ntheNewNew: "+self.new.replace(" ", "S"))
-			#dprint("level", level)
-			#dprint("contentBeforeConversion:")
-			#cdprint(contentBeforeConversion)
 			convertedContent = super().convert(contentBeforeConversion)
-			#dprint("convertedContent:")
-			#cdprint(convertedContent)
-			#print("================ END ================")
-			#print("\n")
+
 			
 			# There might be a better way to determine that
 			# there are no lists of any greater levels anymore.
@@ -510,13 +490,13 @@ class Pmwiki2MdBigBigEndConversion(ConversionBySingleCodeReplacement):
 
 # Titles/Headers
 class Pmwiki2MdTitle1Conversion(ConversionBySingleCodeReplacement):
-	OLD = "\n! "
+	OLD = "\n!"
 	NEW = "\n# "
 class Pmwiki2MdTitle2Conversion(ConversionBySingleCodeReplacement):
-	OLD = "\n!! "
+	OLD = "\n!!"
 	NEW = "\n## "
 class Pmwiki2MdTitle3Conversion(ConversionBySingleCodeReplacement):
-	OLD = "\n!!! "
+	OLD = "\n!!!"
 	NEW = "\n### "
 
 # Sub and Superscript
@@ -540,6 +520,16 @@ class Pmwiki2MdNumberedListConversion(ListConversion):
 	NEW = "1."
 
 # Links
+class Pmwiki2MdLinkWindowTargetConversion(ConversionBySingleCodeReplacement):
+	#OLD = "%newwin%[["
+	#NEW = "[["
+	OLD = "%newwin%"
+	NEW = ""
+class Pmwiki2MdLinkSpecialClosingTagConversion(ConversionBySingleCodeReplacement):
+	#OLD = "]]\%\%"
+	#NEW = "]]"
+	OLD = "%%"
+	NEW = ""
 class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 	BEGIN = "[["
 	END = "]]"
@@ -587,20 +577,20 @@ class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 		return self.__class__.NAMED_LINK_TEMPLATE
 	
 	def convertDelimited(self, partitionedElement):
-		dprint(partitionedElement.address)
 		if partitionedElement.isNameless:
 			linkText = partitionedElement.address
 		else:
+			# In markdown, this 'd end up being a [blabla](http://link) style link.
 			linkText = self.to_namedLinkTemplate.format(\
 				address = self.partitionedElement.address,\
-				name = self.partitionedElement.name)
-		alteredPartitionedElement = self.PartitionedBeginEndDelimitedElement(\
-				beginIndicator = ContentElement(self.to_begin, availableForConversion=False),
-				# TODO: Link names must be available for conversion.
-				element = ContentElement(linkText, availableForConversion=False),\
-				endIndicator = ContentElement(self.to_end, availableForConversion=False)
+				name = self.partitionedElement.name\
 			)
-		dprint(alteredPartitionedElement.address)
+		alteredPartitionedElement = self.PartitionedBeginEndDelimitedElement(\
+			beginIndicator = ContentElement(self.to_begin, availableForConversion=False),
+			# TODO: Link names must be available for conversion.
+			element = ContentElement(linkText, availableForConversion=False),\
+			endIndicator = ContentElement(self.to_end, availableForConversion=False)
+		)
 		return alteredPartitionedElement
 		
 #class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
@@ -666,14 +656,16 @@ class AllConversions(Conversions):
 			Pmwiki2MdBigEndConversion,\
 			Pmwiki2MdBigBigBeginConversion,\
 			Pmwiki2MdBigBigEndConversion,\
-			Pmwiki2MdTitle1Conversion,\
-			Pmwiki2MdTitle2Conversion,\
 			Pmwiki2MdTitle3Conversion,\
+			Pmwiki2MdTitle2Conversion,\
+			Pmwiki2MdTitle1Conversion,\
 			Pmwiki2MdSubscriptConversion,\
 			Pmwiki2MdSuperscriptConversion,\
 			Pmwiki2MdBulletListConversion,\
 			Pmwiki2MdNumberedListConversion,\
 			#Pmwiki2MdDoubleNewlineConversion,\
 			#Pmwiki2MdCodeBlockConversion,\
-			#Pmwiki2MdLinkConversion,\
+			Pmwiki2MdLinkConversion,\
+			Pmwiki2MdLinkWindowTargetConversion,\
+			Pmwiki2MdLinkSpecialClosingTagConversion,\
 			]

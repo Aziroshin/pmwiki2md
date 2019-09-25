@@ -91,8 +91,20 @@ class ConversionTests(unittest.TestCase):
 		
 	def test_Pmwiki2MdTitle1Conversion(self):
 		from pmwiki2md import Pmwiki2MdTitle1Conversion as Conversion
-		original = Content("\n! Cucumbers might be tomatoes.")
+		original = Content("\n!Cucumbers might be tomatoes.")
 		shouldLookLike = ["", "\n# ", "Cucumbers might be tomatoes."]
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
+	def test_Pmwiki2MdTitle2Conversion(self):
+		from pmwiki2md import Pmwiki2MdTitle2Conversion as Conversion
+		original = Content("\n!!Cucumbers might be tomatoes.")
+		shouldLookLike = ["", "\n## ", "Cucumbers might be tomatoes."]
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
+	def test_Pmwiki2MdTitle3Conversion(self):
+		from pmwiki2md import Pmwiki2MdTitle3Conversion as Conversion
+		original = Content("\n!!!Cucumbers might be tomatoes.")
+		shouldLookLike = ["", "\n### ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
 	def test_Pmwiki2MdSubscriptConversion(self):
@@ -109,19 +121,19 @@ class ConversionTests(unittest.TestCase):
 		
 	def test_Pmwiki2Md1LevelBulletListConversion(self):
 		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
-		original = Content("\n* Cucumbers might be tomatoes.")
+		original = Content("\n*Cucumbers might be tomatoes.")
 		shouldLookLike = ["", "\n  - ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
 	def test_Pmwiki2Md2LevelBulletListConversion(self):
 		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
-		original = Content("\n** Cucumbers might be tomatoes.")
+		original = Content("\n**Cucumbers might be tomatoes.")
 		shouldLookLike = ["", "\n    - ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
 	def test_Pmwiki2Md3LevelBulletListConversion(self):
 		from pmwiki2md import Pmwiki2MdBulletListConversion as Conversion
-		original = Content("\n*** Cucumbers might be tomatoes.")
+		original = Content("\n***Cucumbers might be tomatoes.")
 		shouldLookLike = ["", "\n      - ", "Cucumbers might be tomatoes."]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		

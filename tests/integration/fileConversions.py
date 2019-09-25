@@ -108,6 +108,7 @@ class FileConversions(unittest.TestCase):
 				self.filePairs[pmwikiFileTestName] = (TestFilePair(\
 					pmwikiFilePath,\
 					self.getMatchingMdFilePathForPmwikiFilePath(pmwikiFilePath)))
+			#dprint(self.filePairs.keys())
 				
 	def logConverted(self, converted, testFilePair):
 		with open(self.getMdConvertedFilePathFromMdFileName(testFilePair.mdFileName), "w") as convertedFile:
@@ -146,3 +147,5 @@ class FileConversions(unittest.TestCase):
 		
 	def test_hallowelt(self):
 		self.runOneFileTest("hallowelt")
+	def test_hallowelt_titles(self):
+		self.runOneFileTest("hallowelt_titles")
