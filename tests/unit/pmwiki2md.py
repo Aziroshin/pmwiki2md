@@ -21,11 +21,14 @@ class ConversionTests(unittest.TestCase):
 	def compareConverted(self, original, shouldLookLike, Conversion):
 		"""Converts and compares the result to what it should look like."""
 		converted = Conversion().convert(original)
+		#cdprint(Conversion().convert(original))
+		self.assertEqual(len(converted), len(shouldLookLike))
 		for lookalike in shouldLookLike:
 			self.assertEqual(converted.pop(0).content, lookalike)
 			
 	def compareMultiConverted(self, original, shouldLookLike, conversions):
 		converted = conversions.convert(original)
+		self.assertEqual(len(converted), len(shouldLookLike))
 		for lookalike in shouldLookLike:
 			self.assertEqual(converted.pop(0).content, lookalike)
 			
@@ -156,6 +159,13 @@ class ConversionTests(unittest.TestCase):
 		shouldLookLike = ["<", "http://example.com", ">"]
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
+	def test_Pmwiki2MdNamedLinkConversion(self):
+		from pmwiki2md import Pmwiki2MdLinkConversion as Conversion
+		original = Content("[[http://example.com | Example]]")
+		shouldLookLike = ["[", "Example", "]", "(", "http://example.com", ")"]
+		cdprint(Conversion().convert(original))
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
 	def test_ConversionByIterativeSingleCodeReplacementAtBeginOfLine_highestLevel(self):
 		from pmwiki2md import ConversionByIterativeSingleCodeReplacementAtBeginOfLine
 		class __Test(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
@@ -166,6 +176,12 @@ class ConversionTests(unittest.TestCase):
 		count = __Test().highestLevel(toBeCounted)
 		self.assertEqual(count, countShouldBe)
 		
+	def test_Pmwiki2MdPreFormattedInlineConversion(self):
+		from pmwiki2md import Pmwiki2MdPreFormattedInlineConversion as Conversion
+		original = Content("[@Cucumbers might be tomatoes.@]")
+		shouldLookLike = ["[@", "Cucumbers might be tomatoes", "]@"]
+		print(shouldLookLike)
+		self.compareConverted(original, shouldLookLike, Conversion)
 		
 	def test_ContentCopy(self):
 		from pmwiki2md import Content

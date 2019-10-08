@@ -116,7 +116,6 @@ class FileConversions(unittest.TestCase):
 		
 	def convertAndCompare(self, conversions, content, testFilePair):
 		converted = conversions.convert(content)
-		dprint("LALA")
 		self.logConverted(converted.string, testFilePair)
 		return self.assertEqual(converted.string, testFilePair.md)
 				

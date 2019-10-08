@@ -9,17 +9,8 @@ Mit hingegen schon text text text text texttext text text text text text text te
 !Lala
 
 !!Überschrift 1.1 der Code
-Vorformatierten text:
-[@
-for (i=0; i<$counter; i++)
-{
-   doSomething();
-}
-Alpha = new Alpha();
-writeout(Alpha);
-@]
 
-Auch im Editor [@ nano test.txt @] kann man Text editieren und mit[@Ctrl+O@] speichern.
+[[http://example.com | Example]]
 
 !Überschrift 2 zur Tabelle
 ||class="wikitable"

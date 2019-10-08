@@ -223,7 +223,7 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		In most cases, this will probably be used for simple replacements
 		of the begin and end delimiters."""
 		
-		return partitionedElement
+		return [partitionedElement]
 		
 	def getSubElements(self, element):
 		
@@ -250,7 +250,6 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		
 		subElements = []
 		unprocessed = element
-		
 		while True:
 			
 			# Get irrelevant part (partitionedByBegin.before) and relevant part plus
@@ -266,15 +265,13 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 			
 			# Separate relevant part (our sub element) from future iteration part.
 			partitionedByEnd = partitionedByBegin.after.partition(self.end)
-			
-			# Get our spaghettis in a row.
 			preceding = partitionedByBegin.before
+			unprocessed = partitionedByEnd.after # for future iterations.
 			subElement = self.PartitionedBeginEndDelimitedElement(\
 				beginIndicator = self.beginAsContentElement,
 				element = partitionedByEnd.before,
 				endIndicator = self.endAsContentElement,
 			)
-			unprocessed = partitionedByEnd.after # for future iterations.
 			# Add our newly found content elements to the list of elements we'll eventually return.
 			if not preceding.isEmpty:
 				# .partition would have returned an empty string if there was nothing
@@ -283,7 +280,12 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 				# represent actual content, not emptyness.
 				# That's why preceding only enters the element tree when not empty.
 				subElements.append(preceding)
-			subElements = subElements+[*self.convertDelimited(subElement)]
+			
+			# .convertDelimited returns a list of self.PartitionedBeginEndDelimitedElement objects.
+			# Unpack that list, and subsequently unpack the objects and add the resulting
+			# subElements.
+			for convertedSubElement in self.convertDelimited(subElement): # Go through list of subElements.
+				subElements.extend([*convertedSubElement]) #unpack subElement.
 			
 		# If subElements is still an empty list, we haven't found anything to convert.
 		if not subElements:
@@ -304,11 +306,11 @@ class ConversionOfBeginEndDelimitedToOtherDelimiters(ConversionOfBeginEndDelimit
 		return self.__class__.TO_END
 	
 	def convertDelimited(self, partitionedElement):
-		return self.PartitionedBeginEndDelimitedElement(\
+		return [self.PartitionedBeginEndDelimitedElement(\
 			beginIndicator = ContentElement(self.to_begin, availableForConversion=False),\
 			element = partitionedElement.element,\
 			endIndicator = ContentElement(self.to_end, availableForConversion=False)
-			)
+			)]
 		
 class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	
@@ -538,7 +540,11 @@ class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 	TO_BEGIN = "<"
 	TO_END = ">"
 	
-	TO_NAMED_LINK_TEMPLATE = "[${address}](${name})"
+	# For named links.
+	TO_NAMED_NAME_BEGIN = "["
+	TO_NAMED_NAME_END = "]"
+	TO_NAMED_ADDRESS_BEGIN = "("
+	TO_NAMED_ADDRESS_END = ")"
 	
 	class PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS(NamedTuple):
 		beginIndicator: object
@@ -571,27 +577,67 @@ class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 				return partitionedLink[0::2]
 			else:
 				return (partitionedLink[2], "")
+			
+	@property
+	def to_namedNameBegin(self):
+		return self.__class__.TO_NAMED_NAME_BEGIN
+	
+	@property
+	def to_namedNameEnd(self):
+		return self.__class__.TO_NAMED_NAME_END
+	
+	@property
+	def to_namedAddressBegin(self):
+		return self.__class__.TO_NAMED_ADDRESS_BEGIN
+	
+	@property
+	def to_namedAddressEnd(self):
+		return self.__class__.TO_NAMED_ADDRESS_END
 	
 	@property
 	def to_namedLinkTemplate(self):
 		return self.__class__.NAMED_LINK_TEMPLATE
 	
+	#def convertDelimited(self, partitionedElement):
+		#if partitionedElement.isNameless:
+			#linkText = partitionedElement.address
+		#else:
+			## In markdown, this 'd end up being a [blabla](http://link) style link.
+			#linkText = self.to_namedLinkTemplate.format(\
+				#address = self.partitionedElement.address,\
+				#name = self.partitionedElement.name\
+			#)
+		#alteredPartitionedElement = self.PartitionedBeginEndDelimitedElement(\
+			#beginIndicator = ContentElement(self.to_begin, availableForConversion=False),
+			## TODO: Link names must be available for conversion.
+			#element = ContentElement(linkText, availableForConversion=False),\
+			#endIndicator = ContentElement(self.to_end, availableForConversion=False)
+		#)
+		#return [alteredPartitionedElement]
+	
 	def convertDelimited(self, partitionedElement):
 		if partitionedElement.isNameless:
-			linkText = partitionedElement.address
+			return [
+			self.PartitionedBeginEndDelimitedElement(\
+				beginIndicator = ContentElement(self.to_begin, availableForConversion=False),
+				element = ContentElement(partitionedElement.address, availableForConversion=False),
+				endIndicator = ContentElement(self.to_end, availableForConversion=False)
+			)]
 		else:
-			# In markdown, this 'd end up being a [blabla](http://link) style link.
-			linkText = self.to_namedLinkTemplate.format(\
-				address = self.partitionedElement.address,\
-				name = self.partitionedElement.name\
-			)
-		alteredPartitionedElement = self.PartitionedBeginEndDelimitedElement(\
-			beginIndicator = ContentElement(self.to_begin, availableForConversion=False),
-			# TODO: Link names must be available for conversion.
-			element = ContentElement(linkText, availableForConversion=False),\
-			endIndicator = ContentElement(self.to_end, availableForConversion=False)
-		)
-		return alteredPartitionedElement
+			return [\
+			# Link name.
+			self.PartitionedBeginEndDelimitedElement(\
+				beginIndicator = ContentElement(self.to_namedNameBegin, availableForConversion=False),
+				element = ContentElement(partitionedElement.name, availableForConversion=True),
+				endIndicator = ContentElement(self.to_namedNameEnd, availableForConversion=False)
+			),
+			# Link address.
+			self.PartitionedBeginEndDelimitedElement(\
+				beginIndicator = ContentElement(self.to_namedAddressBegin, availableForConversion=False),
+				element = ContentElement(partitionedElement.address, availableForConversion=False),
+				endIndicator = ContentElement(self.to_namedAddressEnd, availableForConversion=False)
+			)]
+		
 		
 #class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
 	#OLD = "*"
@@ -635,12 +681,25 @@ class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	OLD = "\\"
 	NEW = "\n\n"
 
-class Pmwiki2MdCodeBlockConversion(Conversion):
-	pass
+class Pmwiki2MdPreFormattedInlineConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
+	
+	BEGIN = "[@"
+	END = "@]"
+	TO_BEGIN = "`"
+	FROM_BEGIN = "`"
+	
+	"""Converts pre-formatted content blocks.
+	This works by marking the content of pre-formated content blocks
+	as not available for further conversion."""
+	def convertDelimited(self, partitionedElement):
+		convertedPartitionedElement = super().convertDelimited(partitionedElement)[0]
+		convertedPartitionedElement.element.availableForConversion = False
+		return [convertedPartitionedElement]
 
 class AllConversions(Conversions):
 	def __init__(self):
 		self.data = [\
+			Pmwiki2MdPreFormattedInlineConversion,\
 			Pmwiki2MdBoldConversion,\
 			Pmwiki2MdItalicConversion,\
 			Pmwiki2MdItalicBoldConversion,\
@@ -663,8 +722,7 @@ class AllConversions(Conversions):
 			Pmwiki2MdSuperscriptConversion,\
 			Pmwiki2MdBulletListConversion,\
 			Pmwiki2MdNumberedListConversion,\
-			#Pmwiki2MdDoubleNewlineConversion,\
-			#Pmwiki2MdCodeBlockConversion,\
+			Pmwiki2MdDoubleNewlineConversion,\
 			Pmwiki2MdLinkConversion,\
 			Pmwiki2MdLinkWindowTargetConversion,\
 			Pmwiki2MdLinkSpecialClosingTagConversion,\
