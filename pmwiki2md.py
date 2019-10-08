@@ -690,7 +690,7 @@ class Pmwiki2MdPreFormattedInlineConversion(ConversionOfBeginEndDelimitedToOther
 	BEGIN = "[@"
 	END = "@]"
 	TO_BEGIN = "`"
-	FROM_BEGIN = "`"
+	TO_END = "`"
 	
 	"""Converts pre-formatted content blocks.
 	This works by marking the content of pre-formated content blocks

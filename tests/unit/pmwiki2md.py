@@ -178,9 +178,9 @@ class ConversionTests(unittest.TestCase):
 		
 	def test_Pmwiki2MdPreFormattedInlineConversion(self):
 		from pmwiki2md import Pmwiki2MdPreFormattedInlineConversion as Conversion
-		original = Content("[@Cucumbers might be tomatoes.@]")
-		shouldLookLike = ["[@", "Cucumbers might be tomatoes", "]@"]
-		print(shouldLookLike)
+		original = Content("[@Cucumbers *might* be tomatoes.@]")
+		shouldLookLike = ["`", "Cucumbers *might* be tomatoes.", "`"]
+		cdprint(Conversion().convert(original))
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
 	def test_ContentCopy(self):
