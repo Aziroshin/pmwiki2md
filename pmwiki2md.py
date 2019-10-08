@@ -260,7 +260,11 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 			# Are we done?
 			# If partitionedByBegin.after is empty, that means there's nothing left to process.
 			if partitionedByBegin.after.isEmpty:
-				subElements.append(unprocessed)
+				# Unprocessed shall only be added if there's something in it.
+				# This leads to clean and expectable return values with no
+				# unnecessary empty subElements at the end of the list.
+				if not unprocessed.isEmpty:
+					subElements.append(unprocessed)
 				break
 			
 			# Separate relevant part (our sub element) from future iteration part.
