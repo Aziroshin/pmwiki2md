@@ -9,6 +9,7 @@
 from collections import UserList
 from typing import NamedTuple
 import copy, os
+from urllib.parse import urlparse
 
 # Debugging
 import time
@@ -22,6 +23,17 @@ class ConversionError(Exception): pass
 
 class ConvertibleFile(object): pass
 class ConvertedElement(object): pass
+
+class Url(object):
+	def __init__(self, path):
+		self.path = path
+		
+	@property
+	def valid(self):
+		# NOTE: 
+		# This way of validating a URL seems to have some issues according to
+		# https://stackoverflow.com/questions/22238090/validating-urls-in-python
+		return urlparse(self.path).scheme
 
 #==========================================================
 # Content element basics
@@ -642,7 +654,20 @@ class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 				endIndicator = ContentElement(self.to_namedAddressEnd, availableForConversion=False)
 			)]
 		
-		
+class Pmwiki2MdImageConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
+	BEGIN = "[["
+	END = "]]"
+	
+	# For nameless links.
+	TO_BEGIN = "<"
+	TO_END = ">"
+	
+	# For named links.
+	TO_NAMED_NAME_BEGIN = "[" #TODO
+	TO_NAMED_NAME_END = "]"
+	TO_NAMED_ADDRESS_BEGIN = "("
+	TO_NAMED_ADDRESS_END = ")"
+
 #class Pmwiki2MdListConversion(ConversionBySingleCodeReplacement):
 	#OLD = "*"
 	#NEW = "-"

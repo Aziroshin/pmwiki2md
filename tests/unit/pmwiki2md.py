@@ -166,6 +166,13 @@ class ConversionTests(unittest.TestCase):
 		cdprint(Conversion().convert(original))
 		self.compareConverted(original, shouldLookLike, Conversion)
 		
+	def test_Pmwiki2MdImageConversion(self):
+		from pmwiki2md import Pmwiki2MdImageConversion as Conversion
+		original = Content("[[http://example.com/example.png]]")
+		shouldLookLike = ["![", "Example", "]", "(", "http://example.com/example.png", ")"]
+		cdprint(Conversion().convert(original))
+		self.compareConverted(original, shouldLookLike, Conversion)
+		
 	def test_ConversionByIterativeSingleCodeReplacementAtBeginOfLine_highestLevel(self):
 		from pmwiki2md import ConversionByIterativeSingleCodeReplacementAtBeginOfLine
 		class __Test(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
@@ -182,6 +189,15 @@ class ConversionTests(unittest.TestCase):
 		shouldLookLike = ["`", "Cucumbers *might* be tomatoes.", "`"]
 		cdprint(Conversion().convert(original))
 		self.compareConverted(original, shouldLookLike, Conversion)
+		
+	def test_UrlValid(self):
+		from pmwiki2md import Url
+		#NOTE: Libraries used in implementation might
+		# filter out example.com (not sure, just be wary).
+		validUrl = "https://example.com/example.png"
+		invalidUrl = "cucumbers"
+		self.assertTrue(Url(validUrl).valid)
+		self.assertFalse(Url(invalidUrl).valid)
 		
 	def test_ContentCopy(self):
 		from pmwiki2md import Content
