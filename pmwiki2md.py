@@ -25,15 +25,34 @@ class ConvertibleFile(object): pass
 class ConvertedElement(object): pass
 
 class Url(object):
+	
+	IMAGE_FORMAT_SUFFIXES = [".jpg", ".png", ".gif", ".svg", ".bmp"]
+	
+	# NOTE: Might optionally wrap around other libraries than urllib.
+	# Keep interface urllib-agnostic.
+	
 	def __init__(self, path):
 		self.path = path
 		
 	@property
 	def valid(self):
+		
+		"""Is this URL structurally valid?
+		Only looks at the string itself, no connection checks."""
+		
 		# NOTE: 
 		# This way of validating a URL seems to have some issues according to
 		# https://stackoverflow.com/questions/22238090/validating-urls-in-python
+		#
+		
 		return urlparse(self.path).scheme
+	
+	@property
+	def looksLikeImageUrl(self):
+		if not self.valid:
+			return False
+		else:
+			return any([suffix in self.path for suffix in self.__class__.IMAGE_FORMAT_SUFFIXES])
 
 #==========================================================
 # Content element basics

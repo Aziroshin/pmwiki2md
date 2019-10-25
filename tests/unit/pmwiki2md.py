@@ -199,6 +199,13 @@ class ConversionTests(unittest.TestCase):
 		self.assertTrue(Url(validUrl).valid)
 		self.assertFalse(Url(invalidUrl).valid)
 		
+	def test_UrlLooksLikeImageUrl(self):
+		from pmwiki2md import Url
+		validUrl = "https://example.com/example.png"
+		invalidUrl = "https://example.com/example.html"
+		self.assertTrue(Url(validUrl).looksLikeImageUrl)
+		self.assertFalse(Url(invalidUrl).looksLikeImageUrl)
+		
 	def test_ContentCopy(self):
 		from pmwiki2md import Content
 		content1 = Content()
