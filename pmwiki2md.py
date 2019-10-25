@@ -673,7 +673,7 @@ class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 				endIndicator = ContentElement(self.to_namedAddressEnd, availableForConversion=False)
 			)]
 		
-class Pmwiki2MdImageConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
+class Pmwiki2MdImageUrlConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 	BEGIN = "[["
 	END = "]]"
 	
