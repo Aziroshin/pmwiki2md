@@ -110,8 +110,17 @@ class FileConversions(unittest.TestCase):
 					self.getMatchingMdFilePathForPmwikiFilePath(pmwikiFilePath)))
 			#dprint(self.filePairs.keys())
 				
+	def makeParentDirs(self, path):
+		parentPath = Path(path).parent
+		try:
+			os.makedirs(parentPath)
+		except FileExistsError:
+			pass
+		
 	def logConverted(self, converted, testFilePair):
-		with open(self.getMdConvertedFilePathFromMdFileName(testFilePair.mdFileName), "w") as convertedFile:
+		path = self.getMdConvertedFilePathFromMdFileName(testFilePair.mdFileName)
+		self.makeParentDirs(path)
+		with open(path, "w") as convertedFile:
 			convertedFile.write(converted)
 		
 	def convertAndCompare(self, conversions, content, testFilePair):
