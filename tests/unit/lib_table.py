@@ -22,8 +22,8 @@ class TableTest(unittest.TestCase):
 	def basicTestTable(self):
 		from lib.table import Table, Row, Cell
 		return Table(rows=[\
-			Row(cells=[Cell("A1"), Cell("A2")]),\
-			Row(cells=[Cell("B1"), Cell("B2")]),\
+			Row(title="A", cells=[Cell("A1"), Cell("A2")]),\
+			Row(title="B", cells=[Cell("B1"), Cell("B2")]),\
 			])
 	
 	def test_addRowAndCell(self):
@@ -54,6 +54,15 @@ class TableTest(unittest.TestCase):
 		self.assertEqual(table.rows[1].cells[0].text, "B1")
 		self.assertEqual(table.rows[1].cells[1].text, "B2")
 	
+	def test_tableTitles(self):
+	
+		"""
+		Are table titles reported correctly?"""
+		
+		table = self.basicTestTable
+		shouldLookLike = ["A", "B"]
+		self.assertEqual(table.titles, shouldLookLike)
+	
 	def test_MdTableRender(self):
 		
 		"""
@@ -61,6 +70,6 @@ class TableTest(unittest.TestCase):
 		
 		from lib.table import MdTable, TableTheme
 		
-		shouldLookLike = "<TODO>"
+		shouldLookLike = "A1 | A2\nB1 | B2"
 		renderResult = MdTable(self.basicTestTable).render(TableTheme())
 		self.assertEqual(renderResult, shouldLookLike)
