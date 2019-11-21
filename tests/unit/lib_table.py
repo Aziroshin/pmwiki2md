@@ -70,6 +70,7 @@ class TableTest(unittest.TestCase):
 		
 		from lib.table import MdTable, TableTheme
 		
-		shouldLookLike = "A1 | A2\nB1 | B2"
+		#shouldLookLike = "A1 | A2\nB1 | B2"
+		shouldLookLike = "A | B\n--- | ---\nA1 | A2\nB1 | B2"
 		renderResult = MdTable(self.basicTestTable).render(TableTheme())
 		self.assertEqual(renderResult, shouldLookLike)
