@@ -145,6 +145,14 @@ class FilePairs(UserList):
 				return True
 		return False
 		
+	def dottedSuffix(self, suffix):
+		"""Always return the input with a dot prefixed.
+		If it already has one, nothing changes."""
+		if len(suffix) > 0:
+			if not suffix.startswith("."):
+				return "."+suffix
+		return suffix
+		
 	def fromDirs(self, directories, suffixes):
 		
 		"""Walk source directory and initialize file pairs.
@@ -160,7 +168,7 @@ class FilePairs(UserList):
 		for filePath in directories.source.iterdir():
 			
 			if self.iFilterForSuffix:
-				if not filePath.suffix == suffixes.source:
+				if not filePath.suffix == self.dottedSuffix(suffixes.source):
 					# Seems like we're picky as to which file to take. Next!
 					continue
 				
@@ -169,7 +177,7 @@ class FilePairs(UserList):
 			# Assemble target file name.
 			targetFileName = sourcePath.stem
 			if self.iAppendSuffix:
-				targetFileName = targetFileName+suffixes.target
+				targetFileName = targetFileName+self.dottedSuffix(suffixes.target)
 			
 			targetPath = Path(directories.target, targetFileName)
 			filePairs.append(FilePair(sourcePath, targetPath))
