@@ -7,6 +7,7 @@
 from pathlib import Path
 from collections import UserList
 from typing import NamedTuple
+from pmwiki2md import Content
 
 #=======================================================================================
 # Library
@@ -192,4 +193,4 @@ class FileConverter(object):
 	def convert(self):
 		for pair in self.filePairs:
 			converted = self.conversions().convert(Content(pair.source.read()))
-			pair.target.write(converted)
+			pair.target.write(converted.string)

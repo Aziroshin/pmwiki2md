@@ -241,7 +241,7 @@ if __name__ == "__main__":
 	
 	args = TestingArguments().get()
 	tests = Tests(TESTS_DIR)
-	import pmwiki2md
+	from lib import pmwiki2md
 	if len(args.tests) == 0:
 		for testType in tests:
 			for module in tests[testType]:

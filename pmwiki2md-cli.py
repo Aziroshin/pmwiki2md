@@ -7,7 +7,7 @@ import argparse
 # Local
 from lib import converter
 from lib.converter import FileConverter, FilePairs
-from pmwiki2md import AllConversions as Conversions
+from lib.pmwiki2md import AllConversions as Conversions
 
 converter = FileConverter(conversions=Conversions, filePairs=FilePairs(\
 	directoryPaths=FilePairs.DIRECTORY_PATHS(\
@@ -16,4 +16,4 @@ converter = FileConverter(conversions=Conversions, filePairs=FilePairs(\
 	suffixes=FilePairs.SUFFIXES(\
 		source=".pmwiki",\
 		target=".md")))
-converter.convert().string
+converter.convert()
