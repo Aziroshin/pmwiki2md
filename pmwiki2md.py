@@ -728,7 +728,7 @@ class Pmwiki2MdImageUrlConversion(ConversionOfBeginEndDelimitedToOtherDelimiters
 class Pmwiki2MdDoubleNewlineConversion(ConversionBySingleCodeReplacement):
 	OLD = "\\"
 	NEW = "\n\n"
-
+	
 class ConversionOfBeginEndDelimitedToOtherDelimitersUnconvertible(ConversionOfBeginEndDelimitedToOtherDelimiters):
 	"""Converts pre-formatted content blocks.
 	This works by marking the content of pre-formated content blocks
@@ -737,21 +737,20 @@ class ConversionOfBeginEndDelimitedToOtherDelimitersUnconvertible(ConversionOfBe
 		convertedPartitionedElement = super().convertDelimited(partitionedElement)[0]
 		convertedPartitionedElement.element.availableForConversion = False
 		return [convertedPartitionedElement]
-
+	
 class Pmwiki2MdPreFormattedInlineConversion(ConversionOfBeginEndDelimitedToOtherDelimitersUnconvertible):
 	
 	BEGIN = "[@"
 	END = "@]"
 	TO_BEGIN = "`"
 	TO_END = "`"
-
+	
 class Pmwiki2MdPreFormattedBlockConversion(Pmwiki2MdPreFormattedInlineConversion):
 	BEGIN = "[@\n"
 	END = "@]"
 	TO_BEGIN = "```\n"
 	TO_END = "```"
 	
-
 class AllConversions(Conversions):
 	def __init__(self):
 		self.data = [\

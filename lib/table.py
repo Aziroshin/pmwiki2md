@@ -2,13 +2,13 @@
 #-*- coding: utf-8 -*-
 
 from lib.debugging import dprint
+from typing import NamedTuple
 
 class Row(object):
 	
 	"""Table row with Cell objects."""
 	
-	def __init__(self, title="", cells=[]):
-		self.title = title
+	def __init__(self, cells=[]):
 		self.cells = cells
 		
 	def addCell(self, cell):
@@ -17,26 +17,107 @@ class Row(object):
 			cell (Cell)"""
 		self.cells.append(cell)
 		
+	def _getCellListByType(self, pad=False, titlesRequested=True):
+		
+		"""Get either title or data Cell object list."""
+		
+		if pad:
+			paddedCellList = [] 
+			for cell in self.cells:
+				if cell.isTitle == titlesRequested:
+					# Add actual title.
+					paddedCellList.append(cell)
+				else:
+					# Add empty padding.
+					paddedCellList.append(Cell())
+			return paddedCellList
+		else:
+			# Only return title cells; a potentially smaller list.
+			return [c for c in self.cells if c.isTitle == titlesRequested]
+		
+	@property
+	def hasTitleCells(self):
+		"""Returns true if we have title cells, falls if not."""
+		return any([c.isTitle for c in self.cells])
+	
+	def getTitleCells(self, pad=False):
+		
+		"""List of title cells, with or without padding.
+		
+		Takes:
+			
+			- pad (bool) [False]:
+			
+			If True, returns a list with the same size as
+			self.cells, with any cell that isn't a title represented by an
+			empty Cell object (no text). If the row contains no title cells,
+			the list will only contain empty Cell objects.
+			
+			If False (the default) it returns a potentially smaller list with
+			only title cells. If the row contains no title cells, the list
+			is empty."""
+			
+		return self._getCellListByType(pad, titlesRequested=True)
+		
+	def getDataCells(self, pad=False):
+		
+		"""List of data cells, with or without padding.
+		Takes:
+		
+			- pad (boot) [False]:
+			
+			If True, returns a list with the same size as
+			self.cells, with any title cell being represented by an
+			empty Cell object (no text). If the row contains no data cells,
+			the list will only contain empty Cell objects.
+			
+			If False (the default) it returns a potentially smaller list with
+			only data cells. If the row contains no data cells, the list
+			is empty."""
+			
+		return self._getCellListByType(pad, titlesRequested=False)
+	
 class Cell(object):
 	"""Table cell; typically part of a Row object."""
-	def __init__(self, text=""):
+	def __init__(self, text="", isTitle=False):
 		self.text = text
+		self.isTitle = isTitle
 		
 class Table(object):
 	"""Table made up of Row objects."""
 	
+	class NoHeadersError(Exception): pass
+	
 	def __init__(self, rows=[]):
+		dprint(rows)
 		self.rows = rows
 		
 	@property
-	def titles(self):
-		return [r.title for r in self.rows]
+	def hasRows(self):
+		return len(self.rows) > 0
+		
+	@property
+	def hasHeaders(self):
+		if self.hasRows:
+			return self.rows[0].hasTitleCells
+		else:
+			return False
+		
+	@property
+	def headers(self):
+		if self.hasHeaders:
+			return self.rows[0].getTitleCells(pad=True)
+		else:
+			raise self.__class__.NoHeadersError(\
+				"Table headers requested when there are none.")
 	
 	def addRow(self, row):
 		"""Add Row object to table.
 		Takes:
-			row (Row)"""
+			row (Row)
+		Returns: self (chainable)"""
 		self.rows.append(row)
+		return self
 		
 	def render(self):
 		"""Create a human interpretable representation of the table."""
@@ -60,15 +141,16 @@ class PmwikiTable(TableFromCode):
 		Takes:
 			code (str)"""
 		
-		# Get rows.
-		codeRows = code.split("\n")
-		if codeRows[]
-		allRows = []
-		for codeRow in codeRows:
-			allRows.append(codeRow.strip("||").split("||"))
-		if allRows[0][0].strip().startswith("!"):
+		rows = []
+		for rowText in code.split("\n"):
+			row = Row()
+			for cellText in rowText.strip("||").split("||"):
+				cell = Cell(cellText.strip())
+				if cell.text.startswith("!"):
+					cell.isTitle = True
+				row.addCell(cell)
+			rows.append(row)
 			
-	
 class TableFromTableByConversion(Table):
 	
 	"""A table initialized from another table.
@@ -106,7 +188,7 @@ class MdTable(TableFromTableByConversion):
 	
 	def render(self, theme, withTitlesIfAvailable=True):
 		renderedRows = []
-		if self.titles and withTitlesIfAvailable:
+		if self.headers and withTitlesIfAvailable:
 			titleCells = [t for t in self.titles]
 			titleSeparatorCells = [theme.titleSeparator*3 for i in range(0, len(self.titles))]
 			renderedRows.append(theme.verticalBorder.join(titleCells))

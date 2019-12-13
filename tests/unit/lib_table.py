@@ -22,8 +22,9 @@ class TableTest(unittest.TestCase):
 	def basicTestTable(self):
 		from lib.table import Table, Row, Cell
 		return Table(rows=[\
-			Row(title="A", cells=[Cell("A1"), Cell("A2")]),\
-			Row(title="B", cells=[Cell("B1"), Cell("B2")]),\
+			Row(cells=[Cell("1", isTitle=True), Cell("2", isTitle=True)]),\
+			Row(cells=[Cell("A1"), Cell("A2")]),\
+			Row(cells=[Cell("B1"), Cell("B2")]),\
 			])
 	
 	def test_addRowAndCell(self):
@@ -49,19 +50,44 @@ class TableTest(unittest.TestCase):
 		initialization."""
 		
 		table = self.basicTestTable
-		self.assertEqual(table.rows[0].cells[0].text, "A1")
-		self.assertEqual(table.rows[0].cells[1].text, "A2")
-		self.assertEqual(table.rows[1].cells[0].text, "B1")
-		self.assertEqual(table.rows[1].cells[1].text, "B2")
+		self.assertEqual(table.rows[0].cells[0].text, "1")
+		self.assertEqual(table.rows[0].cells[1].text, "2")
+		self.assertEqual(table.rows[1].cells[0].text, "A1")
+		self.assertEqual(table.rows[1].cells[1].text, "A2")
+		self.assertEqual(table.rows[2].cells[0].text, "B1")
+		self.assertEqual(table.rows[2].cells[1].text, "B2")
+		
+	def test_tableHasRows(self):
+		from lib.table import Table
+		table = self.basicTestTable
+		self.assertTrue(table.hasRows)
+		print()
+		dprint(Table)
+		emptyTable = Table()
+		emptyTable2 = Table()
+		emptyTable3 = Table()
+		dprint(emptyTable)
+		dprint(emptyTable.rows[0].cells[0].text)
+		dprint(emptyTable2)
+		dprint(emptyTable3)
+		Table().rows[0].cells[0].text = "Bee"
+		dprint(Table().rows[0].cells[0].text)
+		self.assertFalse(emptyTable.hasRows)
 	
-	def test_tableTitles(self):
+	def test_tableHasHeaders(self):
+		from lib.table import Table
+		table = self.basicTestTable
+		self.assertTrue(table.hasHeaders)
+		self.assertFalse(Table().hasHeaders)
+	
+	def test_tableHeaders(self):
 	
 		"""
 		Are table titles reported correctly?"""
 		
 		table = self.basicTestTable
-		shouldLookLike = ["A", "B"]
-		self.assertEqual(table.titles, shouldLookLike)
+		shouldLookLike = ["1", "2"]
+		self.assertEqual(table.headers, shouldLookLike)
 	
 	def test_MdTableRender(self):
 		
@@ -74,3 +100,4 @@ class TableTest(unittest.TestCase):
 		shouldLookLike = "A | B\n--- | ---\nA1 | A2\nB1 | B2"
 		renderResult = MdTable(self.basicTestTable).render(TableTheme())
 		self.assertEqual(renderResult, shouldLookLike)
+		
