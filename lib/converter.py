@@ -4,10 +4,14 @@
 # Imports
 #=======================================================================================
 
+# Python
 from pathlib import Path
 from collections import UserList
 from typing import NamedTuple
-from pmwiki2md import Content
+from lib.pmwiki2md import Content
+
+# Local
+from lib.datatypes import NamedList
 
 #=======================================================================================
 # Library
@@ -99,17 +103,14 @@ class FilePairs(UserList):
 			If non-empty, target will serve as a suffix to add to all
 			target files."""
 			
-	class DIRECTORY_PATHS(NamedTuple):
-		source: str
-		target: str
+	class DIRECTORY_PATHS(NamedList):
+		ATTRIBUTES = ["source", "target"]
 		
-	class DIRECTORIES(NamedTuple):
-		source: Path
-		target: Path
+	class DIRECTORIES(NamedList):
+		ATTRIBUTES = ["source", "target"]
 		
-	class SUFFIXES(NamedTuple):
-		source: str
-		target: str
+	class SUFFIXES(NamedList):
+		ATTRIBUTES = ["source", "target"]
 		
 	def __init__(self, pairs=[], directoryPaths=None, suffixes=None):
 		self.data = []

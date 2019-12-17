@@ -28,10 +28,6 @@ parser.add_argument("--target-suffix",\
 args = parser.parse_args()
 
 converter = FileConverter(conversions=Conversions, filePairs=FilePairs(\
-	directoryPaths=FilePairs.DIRECTORY_PATHS(\
-		source=args.source,\
-		target=args.target),\
-	suffixes=FilePairs.SUFFIXES(\
-		source=args.source_suffix,\
-		target=args.target_suffix)))
+	directoryPaths=FilePairs.DIRECTORY_PATHS(args.source, args.target),\
+	suffixes=FilePairs.SUFFIXES(args.source_suffix, args.target_suffix)))
 converter.convert()

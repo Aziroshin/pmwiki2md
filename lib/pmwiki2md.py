@@ -11,6 +11,9 @@ from typing import NamedTuple
 import copy, os
 from urllib.parse import urlparse
 
+# Local
+from lib.datatypes import NamedList
+
 # Debugging
 import time
 from lib.debugging import dprint, cdprint
@@ -581,10 +584,10 @@ class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 	TO_NAMED_ADDRESS_BEGIN = "("
 	TO_NAMED_ADDRESS_END = ")"
 	
-	class PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS(NamedTuple):
-		beginIndicator: object
-		element: object
-		endIndicator: object
+	class PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS(NamedList):
+		beginIndicator = ""
+		element = ""
+		endIndicator = ""
 		
 		@property
 		def name(self):
