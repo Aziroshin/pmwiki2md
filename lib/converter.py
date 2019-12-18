@@ -70,14 +70,14 @@ class File(object):
 		return self._cachedContent
 	
 	def read(self):
-		with open(self.path, "r") as fileObj:
+		with open(str(self.path), "r") as fileObj:
 			return fileObj.read()
 		
 	def write(self, content):
 		
 		"""Write specified content and reset content cache."""
 		
-		with open(self.path, "w") as fileObj:
+		with open(str(self.path), "w") as fileObj:
 			self._cachedContent = None
 			return fileObj.write(content)
 		
