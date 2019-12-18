@@ -585,9 +585,7 @@ class Pmwiki2MdLinkConversion(ConversionOfBeginEndDelimitedToOtherDelimiters):
 	TO_NAMED_ADDRESS_END = ")"
 	
 	class PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS(NamedList):
-		beginIndicator = ""
-		element = ""
-		endIndicator = ""
+		ATTRIBUTES = ["beginIndicator", "element", "endIndicator"]
 		
 		@property
 		def name(self):
