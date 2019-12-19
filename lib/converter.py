@@ -75,13 +75,10 @@ class File(object):
 	
 	def read(self):
 		if self.ignoreCodecReadErrors:
-			print("IGNORE")
 			errorHandler="ignore"
 		else:
 			errorHandler = None
 		with open(str(self.path), "r", errors=errorHandler) as fileObj:
-			print(fileObj.read())
-			sys.exit(0)
 			return fileObj.read()
 		
 	def write(self, content):
