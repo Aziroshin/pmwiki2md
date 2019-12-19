@@ -13,6 +13,9 @@ from lib.pmwiki2md import Content
 # Local
 from lib.datatypes import NamedList
 
+# Debugging
+import sys
+
 #=======================================================================================
 # Library
 #=======================================================================================
@@ -35,8 +38,9 @@ class File(object):
 			Is initialized with the file's content every time
 			.content is called AND this is found to be None."""
 	
-	def __init__(self, pathObj):
+	def __init__(self, pathObj, ignoreCodecReadErrors=False):
 		self.path = pathObj
+		self.ignoreCodecReadErrors = ignoreCodecReadErrors
 		self._cachedContent = None
 		
 	@property
@@ -70,7 +74,14 @@ class File(object):
 		return self._cachedContent
 	
 	def read(self):
-		with open(str(self.path), "r") as fileObj:
+		if self.ignoreCodecReadErrors:
+			print("IGNORE")
+			errorHandler="ignore"
+		else:
+			errorHandler = None
+		with open(str(self.path), "r", errors=errorHandler) as fileObj:
+			print(fileObj.read())
+			sys.exit(0)
 			return fileObj.read()
 		
 	def write(self, content):
@@ -83,9 +94,9 @@ class File(object):
 		
 class FilePair(object):
 	
-	def __init__(self, sourcePathObj, targetPathObj):
-		self.source = File(sourcePathObj)
-		self.target = File(targetPathObj)
+	def __init__(self, sourcePathObj, targetPathObj, ignoreCodecReadErrors=False):
+		self.source = File(sourcePathObj, ignoreCodecReadErrors=ignoreCodecReadErrors)
+		self.target = File(targetPathObj, ignoreCodecReadErrors=ignoreCodecReadErrors)
 		
 class FilePairs(UserList):
 	
@@ -112,8 +123,9 @@ class FilePairs(UserList):
 	class SUFFIXES(NamedList):
 		ATTRIBUTES = ["source", "target"]
 		
-	def __init__(self, pairs=[], directoryPaths=None, suffixes=None):
+	def __init__(self, pairs=[], directoryPaths=None, suffixes=None, ignoreCodecReadErrors=False):
 		self.data = []
+		self.ignoreCodecReadErrors = ignoreCodecReadErrors
 		if not suffixes == None:
 			self.suffixes = suffixes
 		else:
@@ -181,7 +193,7 @@ class FilePairs(UserList):
 				targetFileName = targetFileName+self.dottedSuffix(suffixes.target)
 			
 			targetPath = Path(directories.target, targetFileName)
-			filePairs.append(FilePair(sourcePath, targetPath))
+			filePairs.append(FilePair(sourcePath, targetPath, ignoreCodecReadErrors=self.ignoreCodecReadErrors))
 		
 		return filePairs
 	

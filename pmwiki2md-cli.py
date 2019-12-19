@@ -25,9 +25,15 @@ parser.add_argument("--target-suffix",\
 	help="Suffix to add to converted files. Default:"
 	"{default}".format(default=DEFAULT_TARGET_SUFFIX),\
 	default=DEFAULT_TARGET_SUFFIX)
+
+parser.add_argument("-i", "--ignore-codec-read-errors",\
+	help="Ignores codec errors when reading source files. This might produce unusable results, however.",\
+	action="store_true")
+
 args = parser.parse_args()
 
 converter = FileConverter(conversions=Conversions, filePairs=FilePairs(\
 	directoryPaths=FilePairs.DIRECTORY_PATHS(args.source, args.target),\
-	suffixes=FilePairs.SUFFIXES(args.source_suffix, args.target_suffix)))
+	suffixes=FilePairs.SUFFIXES(args.source_suffix, args.target_suffix),\
+	ignoreCodecReadErrors=args.ignore_codec_read_errors))
 converter.convert()
