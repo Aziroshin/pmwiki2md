@@ -30,17 +30,18 @@ class File(object):
 	Takes:
 		path (Path)
 	Has:
-		path (Path)
+		- path (Path)
 			pathlib.Path object from specified path.
-		_cachedContent (None || str)
+		- _cachedContent (None || str)
 			Contains file's contents. Starts with None, and gets
 			set to None every time .write() is called.
 			Is initialized with the file's content every time
 			.content is called AND this is found to be None."""
 	
-	def __init__(self, pathObj, ignoreCodecReadErrors=False):
+	def __init__(self, pathObj, ignoreCodecReadErrors=False, encoding=None):
 		self.path = pathObj
 		self.ignoreCodecReadErrors = ignoreCodecReadErrors
+		self._encoding = encoding
 		self._cachedContent = None
 		
 	@property
@@ -64,6 +65,14 @@ class File(object):
 		return self.path.stem
 	
 	@property
+	def encoding(self):
+		"""Which encoding to use for our operations."""
+		if self._encoding:
+			return self._encoding
+		else:
+			return None
+	
+	@property
 	def content(self):
 		
 		"""File's cached content.
@@ -74,26 +83,33 @@ class File(object):
 		return self._cachedContent
 	
 	def read(self):
+		
+		# Configure handling of encoding related errors while reading.
 		if self.ignoreCodecReadErrors:
 			errorHandler="ignore"
 		else:
 			errorHandler = None
-		with open(str(self.path), "r", errors=errorHandler) as fileObj:
+		
+		# Read.
+		with open(str(self.path), "r", errors=errorHandler, encoding=self.encoding) as fileObj:
 			return fileObj.read()
 		
 	def write(self, content):
 		
 		"""Write specified content and reset content cache."""
 		
-		with open(str(self.path), "w") as fileObj:
+		with open(str(self.path), "w", encoding=self.encoding) as fileObj:
 			self._cachedContent = None
 			return fileObj.write(content)
 		
 class FilePair(object):
 	
-	def __init__(self, sourcePathObj, targetPathObj, ignoreCodecReadErrors=False):
-		self.source = File(sourcePathObj, ignoreCodecReadErrors=ignoreCodecReadErrors)
-		self.target = File(targetPathObj, ignoreCodecReadErrors=ignoreCodecReadErrors)
+	def __init__(self, sourcePathObj, targetPathObj, ignoreCodecReadErrors=False,\
+		sourceEncoding=None, targetEncoding=None):
+		self.source = File(sourcePathObj, ignoreCodecReadErrors=ignoreCodecReadErrors,\
+			encoding=sourceEncoding)
+		self.target = File(targetPathObj, ignoreCodecReadErrors=ignoreCodecReadErrors,\
+			encoding=targetEncoding)
 		
 class FilePairs(UserList):
 	
@@ -112,17 +128,23 @@ class FilePairs(UserList):
 			target files."""
 			
 	class DIRECTORY_PATHS(NamedList):
+		"""Source and target paths as strings."""
 		ATTRIBUTES = ["source", "target"]
 		
 	class DIRECTORIES(NamedList):
+		"""Source and target paths as pathlib.PATH objects."""
 		ATTRIBUTES = ["source", "target"]
 		
 	class SUFFIXES(NamedList):
+		"""Source and target file name suffixes as strings."""
 		ATTRIBUTES = ["source", "target"]
 		
-	def __init__(self, pairs=[], directoryPaths=None, suffixes=None, ignoreCodecReadErrors=False):
+	def __init__(self, pairs=[], directoryPaths=None, suffixes=None, ignoreCodecReadErrors=False,\
+		sourceEncoding=None, targetEncoding=None):
 		self.data = []
 		self.ignoreCodecReadErrors = ignoreCodecReadErrors
+		self.sourceEncoding = sourceEncoding
+		self.targetEncoding = targetEncoding
 		if not suffixes == None:
 			self.suffixes = suffixes
 		else:
@@ -190,7 +212,8 @@ class FilePairs(UserList):
 				targetFileName = targetFileName+self.dottedSuffix(suffixes.target)
 			
 			targetPath = Path(directories.target, targetFileName)
-			filePairs.append(FilePair(sourcePath, targetPath, ignoreCodecReadErrors=self.ignoreCodecReadErrors))
+			filePairs.append(FilePair(sourcePath, targetPath, ignoreCodecReadErrors=self.ignoreCodecReadErrors,\
+				sourceEncoding=self.sourceEncoding, targetEncoding=self.targetEncoding))
 		
 		return filePairs
 	

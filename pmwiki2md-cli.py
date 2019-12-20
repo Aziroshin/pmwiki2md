@@ -30,10 +30,18 @@ parser.add_argument("-i", "--ignore-codec-read-errors",\
 	help="Ignores codec errors when reading source files. This might produce unusable results, however.",\
 	action="store_true")
 
+parser.add_argument("--source-encoding",\
+	help="Text encoding for source files. Consult python documentation for available encodings and their codes.")
+
+parser.add_argument("--target-encoding",\
+	help="Text encoding for target files. Consult python documentation for available encodings and their codes.")
+
 args = parser.parse_args()
 
 converter = FileConverter(conversions=Conversions, filePairs=FilePairs(\
 	directoryPaths=FilePairs.DIRECTORY_PATHS(args.source, args.target),\
 	suffixes=FilePairs.SUFFIXES(args.source_suffix, args.target_suffix),\
-	ignoreCodecReadErrors=args.ignore_codec_read_errors))
+	ignoreCodecReadErrors=args.ignore_codec_read_errors,\
+	sourceEncoding=args.source_encoding,\
+	targetEncoding=args.target_encoding))
 converter.convert()

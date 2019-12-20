@@ -14,9 +14,7 @@ import os
 
 def dprint(*args, stackLevel=1):
 	
-	#=============================
 	"""Print a debugging message with automagically added context information."""
-	#=============================
 
 	parentStackContext = inspect.stack()[stackLevel]
 	

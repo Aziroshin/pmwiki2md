@@ -392,10 +392,17 @@ class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	
 class ConversionByIterativeSingleCodeReplacementAtBeginOfLine(ConversionBySingleCodeReplacement):
 	
+		"""Converts content with stacking single code tags.
+		Examples of stacking single code tags would be *, ** and ***."""
+	
 		def oldByLevel(self, level):
+			"""Return the old tag multiplied by the specified level.
+			Example: If the level is 3 and the tag is *, it'd return ***."""
 			return self.__class__.OLD*level
 		
 		def newByLevel(self, level):
+			"""Return the new tag multiplied by the specified level.
+			Example: If the level is 3 and the tag is -, it'd return ---."""
 			return self.__class__.NEW*level
 		
 		def highestLevel(self, content):
