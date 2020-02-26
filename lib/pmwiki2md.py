@@ -200,6 +200,16 @@ class Conversion(object):
 	
 class ElementByElementConversion(Conversion):
 	
+	"""Replacing ContentElement objects in a Content object with converted ones.
+	
+	Base class intended for subclassing:
+	By default, .convert replaces every ContentElement with the
+	result of .convertSubElements.
+	.getSubElements determines how (and whether) ContentElement objects are broken
+	down prior to conversion.
+	As a result, one ContentElement object may end up getting replaced
+	by multiples."""
+	
 	def getSubElements(self, element):
 		
 		"""Breaks the element down into other elements.
@@ -230,6 +240,19 @@ class ElementByElementConversion(Conversion):
 		return alteredContent
 	
 class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
+	
+	"""Conversion of delimited pieces of content to something else.
+	
+	Base class meant to be subclassed:
+	Provides the basic functionality of dividing delimited strings
+	into three ConteneElement objects: The begin and end delimiters, and
+	the actual "content" inbetween. These three pieces are sorted into
+	a named tuple, defined in the PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS
+	class attribute, which is referenced by the
+	PartitionedBeginEndDelimitedElement method.
+	
+	.convertDelimited is the method to override to convert content
+	so organized."""
 	
 	BEGIN = None #OVERRIDE
 	END = None #OVERRIDE
@@ -270,7 +293,7 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		that every successfully identified sub-string results in three content elements.
 		
 		Internally, as far as this and any method related to further processing of this three-pieced
-		element representation are concerned, the such partitioned element is represented as
+		element representation are concerned, the so partitioned element is represented as
 		a NamedTuple of the type referenced by self.PartitionedBeginEndDelimitedElement, and defined in
 		the class attribute PARTITIONED_BEGIN_END_DELIMITED_ELEMENT_CLASS.
 		
@@ -288,7 +311,6 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 			
 			# Get irrelevant part (partitionedByBegin.before) and relevant part plus
 			# the part we'll process in future iterations (partitionedByBegin.after)
-			#dprint(self.begin)
 			partitionedByBegin = unprocessed.partition(self.begin)
 			
 			# Are we done?
@@ -331,6 +353,11 @@ class ConversionOfBeginEndDelimitedToSomething(ElementByElementConversion):
 		return subElements
 	
 class ConversionOfBeginEndDelimitedToOtherDelimiters(ConversionOfBeginEndDelimitedToSomething):
+	
+	"""Conversion of a set of delimiters to a different set.
+	Example: <oldbegin>something</oldend> to [newbegin]something[/newend]
+	Override the class attributes TO_BEGIN and TO_END to determine
+	the new set of delimiters this should convert to."""
 	
 	TO_BEGIN = None
 	TO_END = None
@@ -392,34 +419,34 @@ class ConversionBySingleCodeReplacement(ElementByElementConversion):
 	
 class ConversionByIterativeSingleCodeReplacementAtBeginOfLine(ConversionBySingleCodeReplacement):
 	
-		"""Converts content with stacking single code tags.
-		Examples of stacking single code tags would be *, ** and ***."""
+	"""Converts content with stacking single code tags.
+	Examples of stacking single code tags would be *, ** and ***."""
+
+	def oldByLevel(self, level):
+		"""Return the old tag multiplied by the specified level.
+		Example: If the level is 3 and the tag is *, it'd return ***."""
+		return self.__class__.OLD*level
 	
-		def oldByLevel(self, level):
-			"""Return the old tag multiplied by the specified level.
-			Example: If the level is 3 and the tag is *, it'd return ***."""
-			return self.__class__.OLD*level
-		
-		def newByLevel(self, level):
-			"""Return the new tag multiplied by the specified level.
-			Example: If the level is 3 and the tag is -, it'd return ---."""
-			return self.__class__.NEW*level
-		
-		def highestLevel(self, content):
-			"""Returns the highest count of OLD indicators found in all line beginnings throughout the content."""
-			maxContentLevel = 1
-			for line in content.lines:
-				maxLineLevel = 0
-				if len(line) > 0:
-					previousChar = self.old
-					for char in line:
-						if not char == previousChar:
-							break
-						maxLineLevel += 1
-						previousChar = char
-				if maxLineLevel > maxContentLevel:
-					maxContentLevel = maxLineLevel
-			return maxContentLevel
+	def newByLevel(self, level):
+		"""Return the new tag multiplied by the specified level.
+		Example: If the level is 3 and the tag is -, it'd return ---."""
+		return self.__class__.NEW*level
+	
+	def highestLevel(self, content):
+		"""Returns the highest count of OLD indicators found in all line beginnings throughout the content."""
+		maxContentLevel = 1
+		for line in content.lines:
+			maxLineLevel = 0
+			if len(line) > 0:
+				previousChar = self.old
+				for char in line:
+					if not char == previousChar:
+						break
+					maxLineLevel += 1
+					previousChar = char
+			if maxLineLevel > maxContentLevel:
+				maxContentLevel = maxLineLevel
+		return maxContentLevel
 
 class ListConversion(ConversionByIterativeSingleCodeReplacementAtBeginOfLine):
 	
