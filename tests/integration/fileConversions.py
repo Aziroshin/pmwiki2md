@@ -113,7 +113,7 @@ class FileConversions(unittest.TestCase):
 	def makeParentDirs(self, path):
 		parentPath = Path(path).parent
 		try:
-			os.makedirs(parentPath)
+			os.makedirs(parentPath.as_posix())
 		except FileExistsError:
 			pass
 		
@@ -129,7 +129,7 @@ class FileConversions(unittest.TestCase):
 		return self.assertEqual(converted.string, testFilePair.md)
 				
 	def _runOneFileTest(self, filePair):
-		from pmwiki2md import AllConversions as Conversions, Content as Content
+		from lib.pmwiki2md import AllConversions as Conversions, Content as Content
 		conversions = Conversions()
 		pmwikiFilePath = os.path.join(self.pmwikiConversionsBaseDir, "testTest.pmwiki")
 		mdFilePath = self.getMatchingMdFilePathForPmwikiFilePath(pmwikiFilePath)
@@ -138,7 +138,7 @@ class FileConversions(unittest.TestCase):
 		return self.assertEqual(conversions.convert(Content(testFilePair.pmwiki)).string, testFilePair.md)
 		
 	def runOneFileTest(self, pmwikiFileTestName):
-		from pmwiki2md import AllConversions as Conversions, Content as Content
+		from lib.pmwiki2md import AllConversions as Conversions, Content as Content
 		testFilePair = self.filePairs[pmwikiFileTestName]
 		conversions = Conversions()
 		content = Content(testFilePair.pmwiki)
