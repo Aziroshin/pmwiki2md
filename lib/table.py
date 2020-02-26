@@ -17,47 +17,47 @@ class Row(object):
 			cell (Cell)"""
 		self.cells.append(cell)
 		
-	def _getCellListByType(self, pad=False, titlesRequested=True):
+	def _getCellListByType(self, pad=False, headersRequested=True):
 		
-		"""Get either title or data Cell object list."""
+		"""Get either header or data Cell object list."""
 		
 		if pad:
 			paddedCellList = [] 
 			for cell in self.cells:
-				if cell.isTitle == titlesRequested:
-					# Add actual title.
+				if cell.isHeader == headersRequested:
+					# Add actual header.
 					paddedCellList.append(cell)
 				else:
 					# Add empty padding.
 					paddedCellList.append(Cell())
 			return paddedCellList
 		else:
-			# Only return title cells; a potentially smaller list.
-			return [c for c in self.cells if c.isTitle == titlesRequested]
+			# Only return header cells; a potentially smaller list.
+			return [c for c in self.cells if c.isHeader == headersRequested]
 		
 	@property
-	def hasTitleCells(self):
-		"""Returns true if we have title cells, falls if not."""
-		return any([c.isTitle for c in self.cells])
+	def hasHeaderCells(self):
+		"""Returns true if we have header cells, false if not."""
+		return any([c.isHeader for c in self.cells])
 	
-	def getTitleCells(self, pad=False):
+	def getHeaderCells(self, pad=False):
 		
-		"""List of title cells, with or without padding.
+		"""List of header cells, with or without padding.
 		
 		Takes:
 			
 			- pad (bool) [False]:
 			
 			If True, returns a list with the same size as
-			self.cells, with any cell that isn't a title represented by an
-			empty Cell object (no text). If the row contains no title cells,
+			self.cells, with any cell that isn't a header represented by an
+			empty Cell object (no text). If the row contains no header cells,
 			the list will only contain empty Cell objects.
 			
 			If False (the default) it returns a potentially smaller list with
-			only title cells. If the row contains no title cells, the list
+			only header cells. If the row contains no header cells, the list
 			is empty."""
 			
-		return self._getCellListByType(pad, titlesRequested=True)
+		return self._getCellListByType(pad, headersRequested=True)
 		
 	def getDataCells(self, pad=False):
 		
@@ -67,7 +67,7 @@ class Row(object):
 			- pad (boot) [False]:
 			
 			If True, returns a list with the same size as
-			self.cells, with any title cell being represented by an
+			self.cells, with any header cell being represented by an
 			empty Cell object (no text). If the row contains no data cells,
 			the list will only contain empty Cell objects.
 			
@@ -75,13 +75,13 @@ class Row(object):
 			only data cells. If the row contains no data cells, the list
 			is empty."""
 			
-		return self._getCellListByType(pad, titlesRequested=False)
+		return self._getCellListByType(pad, headersRequested=False)
 	
 class Cell(object):
 	"""Table cell; typically part of a Row object."""
-	def __init__(self, text="", isTitle=False):
+	def __init__(self, text="", isHeader=False):
 		self.text = text
-		self.isTitle = isTitle
+		self.isHeader = isHeader
 		
 class Table(object):
 	"""Table made up of Row objects."""
@@ -99,14 +99,14 @@ class Table(object):
 	@property
 	def hasHeaders(self):
 		if self.hasRows:
-			return self.rows[0].hasTitleCells
+			return self.rows[0].hasHeaderCells
 		else:
 			return False
 		
 	@property
 	def headers(self):
 		if self.hasHeaders:
-			return self.rows[0].getTitleCells(pad=True)
+			return self.rows[0].getHeaderCells(pad=True)
 		else:
 			raise self.__class__.NoHeadersError(\
 				"Table headers requested when there are none.")
@@ -147,7 +147,7 @@ class PmwikiTable(TableFromCode):
 			for cellText in rowText.strip("||").split("||"):
 				cell = Cell(cellText.strip())
 				if cell.text.startswith("!"):
-					cell.isTitle = True
+					cell.isHeader = True
 				row.addCell(cell)
 			rows.append(row)
 			
@@ -175,7 +175,7 @@ class TableTheme(object):
 	The default is markdown style tables."""
 	
 	@property
-	def titleSeparator(self):
+	def headerSeparator(self):
 		return "-"
 	@property
 	def verticalBorder(self):
@@ -186,13 +186,13 @@ class MdTable(TableFromTableByConversion):
 	def fromTable(self, table):
 		self.rows = table.rows
 	
-	def render(self, theme, withTitlesIfAvailable=True):
+	def render(self, theme, withHeadersIfAvailable=True):
 		renderedRows = []
-		if self.headers and withTitlesIfAvailable:
-			titleCells = [t for t in self.titles]
-			titleSeparatorCells = [theme.titleSeparator*3 for i in range(0, len(self.titles))]
-			renderedRows.append(theme.verticalBorder.join(titleCells))
-			renderedRows.append(theme.verticalBorder.join(titleSeparatorCells))
+		if self.headers and withHeadersIfAvailable:
+			headerCells = [t for t in self.headers]
+			headerSeparatorCells = [theme.headerSeparator*3 for i in range(0, len(self.headers))]
+			renderedRows.append(theme.verticalBorder.join(headerCells))
+			renderedRows.append(theme.verticalBorder.join(headerSeparatorCells))
 		for row in self.rows:
 			renderedCells = theme.verticalBorder.join([c.text for c in row.cells])
 			renderedRows.append(renderedCells)

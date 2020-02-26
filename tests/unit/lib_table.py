@@ -22,7 +22,7 @@ class TableTest(unittest.TestCase):
 	def basicTestTable(self):
 		from lib.table import Table, Row, Cell
 		return Table(rows=[\
-			Row(cells=[Cell("1", isTitle=True), Cell("2", isTitle=True)]),\
+			Row(cells=[Cell("1", isHeader=True), Cell("2", isHeader=True)]),\
 			Row(cells=[Cell("A1"), Cell("A2")]),\
 			Row(cells=[Cell("B1"), Cell("B2")]),\
 			])
@@ -83,7 +83,7 @@ class TableTest(unittest.TestCase):
 	def test_tableHeaders(self):
 	
 		"""
-		Are table titles reported correctly?"""
+		Are table headers reported correctly?"""
 		
 		table = self.basicTestTable
 		shouldLookLike = ["1", "2"]
