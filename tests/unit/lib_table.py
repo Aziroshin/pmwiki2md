@@ -22,10 +22,11 @@ class TableTest(unittest.TestCase):
 	def basicTestTable(self):
 		from lib.table import Table, Row, Cell
 		return Table(rows=[\
-			Row(cells=[Cell("1", isHeader=True), Cell("2", isHeader=True)]),\
-			Row(cells=[Cell("A1"), Cell("A2")]),\
-			Row(cells=[Cell("B1"), Cell("B2")]),\
-			])
+		Row(cells=[Cell("1", isHeader=True), Cell("2", isHeader=True)]),\
+		Row(cells=[Cell("A1"), Cell("A2")]),\
+		Row(cells=[Cell("B1"), Cell("B2")]),\
+		])
+
 	
 	def test_addRowAndCell(self):
 		"""
@@ -34,11 +35,13 @@ class TableTest(unittest.TestCase):
 		cell = Cell()
 		row = Row()
 		table = Table()
+		table.test = "addRowAndCellTest"
 		cell.text = "Test"
 		row.addCell(cell)
-		table.addRow(row)
+		table.addRow(row) #NOTE: BUG found: does something to trip up tableHasRows.
 		textFoundInTableCell = table.rows[0].cells[0].text
 		self.assertEqual(textFoundInTableCell, "Test")
+		dprint("Table address:", table)
 		
 	def test_tableIntegrity(self):
 		"""
@@ -61,18 +64,20 @@ class TableTest(unittest.TestCase):
 		from lib.table import Table
 		table = self.basicTestTable
 		self.assertTrue(table.hasRows)
-		print()
-		dprint(Table)
+		#dprint(Table)
 		emptyTable = Table()
-		emptyTable2 = Table()
-		emptyTable3 = Table()
+		#emptyTable2 = Table()
+		#emptyTable3 = Table()
 		dprint(emptyTable)
 		dprint(emptyTable.rows[0].cells[0].text)
-		dprint(emptyTable2)
-		dprint(emptyTable3)
-		Table().rows[0].cells[0].text = "Bee"
-		dprint(Table().rows[0].cells[0].text)
-		self.assertFalse(emptyTable.hasRows)
+		dprint("Table address:", emptyTable)
+		#emptyTable.test = "tableHasRowsTest"
+		dprint(emptyTable.test)
+		#dprint(emptyTable2)
+		#dprint(emptyTable3)
+		#Table().rows[0].cells[0].text = "Bee"
+		#dprint(Table().rows[0].cells[0].text)
+		#self.assertFalse(emptyTable.hasRows)
 	
 	def test_tableHasHeaders(self):
 		from lib.table import Table

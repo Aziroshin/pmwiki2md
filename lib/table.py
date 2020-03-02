@@ -89,6 +89,7 @@ class Table(object):
 	class NoHeadersError(Exception): pass
 	
 	def __init__(self, rows=[]):
+		self.test = "orig test"
 		dprint(rows)
 		self.rows = rows
 		
