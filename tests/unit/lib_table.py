@@ -66,13 +66,28 @@ class TableTest(unittest.TestCase):
 		self.assertTrue(table.hasRows)
 		#dprint(Table)
 		emptyTable = Table()
-		#emptyTable2 = Table()
+		emptyTable2 = Table()
 		#emptyTable3 = Table()
-		dprint(emptyTable)
 		dprint(emptyTable.rows[0].cells[0].text)
-		dprint("Table address:", emptyTable)
+		emptyTable.rows[0].cells[0].text = "Table1"
+		emptyTable2.rows[0].cells[0].text = "Table2"
+		emptyTable.test = "Testvariable of table 1"
+		emptyTable2.test = "Testvariable of table 2"
+		emptyTable.rows.append("Rowlist of table 1")
+		emptyTable2.rows.append("Rowlist of table 2")
+		dprint("Cells the same:", emptyTable.rows[0].cells == emptyTable2.rows[0].cells)
+		dprint("Row the same:", emptyTable.rows[0] == emptyTable2.rows[0])
+		dprint("Rowlist the same:", "Rowlist of table 2" in emptyTable.rows)
+		dprint("Row:", emptyTable.rows[0], emptyTable2.rows[0])
+		dprint("Table1 address:", emptyTable)
+		dprint("Table2 address:", emptyTable2)
+		dprint("Same address:", emptyTable == emptyTable2)
+		dprint("Table1 content: ", emptyTable.rows[0].cells[0].text)
+		dprint("Table2 content:", emptyTable2.rows[0].cells[0].text)
+		dprint("Same content:", emptyTable.rows[0].cells[0].text == emptyTable2.rows[0].cells[0].text)
 		#emptyTable.test = "tableHasRowsTest"
-		dprint(emptyTable.test)
+		dprint("Testvariable of table 1:", emptyTable.test)
+		dprint("Testvariable of table 2:", emptyTable2.test)
 		#dprint(emptyTable2)
 		#dprint(emptyTable3)
 		#Table().rows[0].cells[0].text = "Bee"
