@@ -88,10 +88,8 @@ class Table(object):
 	
 	class NoHeadersError(Exception): pass
 	
-	def __init__(self, rows=[]):
-		self.test = "orig test"
-		dprint(rows)
-		self.rows = rows
+	def __init__(self, rows=None):
+		self.rows = rows if rows else []
 		
 	@property
 	def hasRows(self):
